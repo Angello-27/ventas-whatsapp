@@ -1,12 +1,12 @@
 /**
- * Entidad ChatSession
+ * Entidad ChatSession (sesionchat)
  */
 class ChatSession {
   constructor({ id, customerId, startedAt, endedAt }) {
-    this.id = id;
+    this.id         = id;
     this.customerId = customerId;
-    this.startedAt = startedAt;  // Date
-    this.endedAt = endedAt;      // Date | null
+    this.startedAt  = startedAt;    // corresponde a IniciadoEn
+    this.endedAt    = endedAt;      // corresponde a FinalizadoEn
   }
 }
 

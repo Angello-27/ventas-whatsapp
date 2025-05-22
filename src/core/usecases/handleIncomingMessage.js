@@ -1,31 +1,36 @@
 /**
- * Caso de uso: procesa un mensaje entrante de Twilio
- * - Busca o crea el cliente
- * - Busca o crea la sesión activa
- * - Guarda el mensaje
- * - Retorna respuesta de texto
+ * Caso de uso: procesa un mensaje entrante de WhatsApp
  */
-async function handleIncomingMessage({ from, body }, { customerRepo, sessionRepo, messageRepo }) {
-  // 1) Cliente
+async function handleIncomingMessage(
+  { from, body },
+  { customerRepo, sessionRepo, messageRepo }
+) {
+  // 1) Cliente: busca por teléfono o crea uno nuevo
   let customer = await customerRepo.findByPhoneNumber(from);
   if (!customer) {
-    customer = await customerRepo.create({ name: null, phoneNumber: from, type: 'NEW' });
+    customer = await customerRepo.create({
+      name: null,
+      phoneNumber: from,
+      email: null,
+      address: null,
+      type: 'Nuevo'
+    });
   }
 
-  // 2) Sesión
+  // 2) Sesión: busca sesión activa o crea una nueva
   let session = await sessionRepo.findActiveByCustomerId(customer.id);
   if (!session) {
     session = await sessionRepo.create({ customerId: customer.id });
   }
 
-  // 3) Mensaje
+  // 3) Mensaje: guarda como 'Entrante'
   await messageRepo.save({
     sessionId: session.id,
-    direction: 'INBOUND',
+    direction: 'Entrante',
     content: body
   });
 
-  // 4) Respuesta
+  // 4) Respuesta automática
   return 'Gracias por tu mensaje. En breve te atenderemos.';
 }
 

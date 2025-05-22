@@ -1,7 +1,11 @@
 const { MessagingResponse } = require('twilio').twiml;
-const handleIncomingMessage = require('../../core/usecases/handleIncomingMessage');
+const handleIncomingMessage  = require('../../core/usecases/handleIncomingMessage');
 
-module.exports = (repos, twilioConfig) => async (req, res) => {
+/**
+ * Controlador HTTP para /webhook
+ * Solo necesita repos y usa handleIncomingMessage
+ */
+module.exports = (repos) => async (req, res) => {
   const from = req.body.From;
   const body = req.body.Body;
   try {

@@ -1,31 +1,33 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const TwilioValidator = require('../twilio/TwilioValidator');
+const express          = require('express');
+const bodyParser       = require('body-parser');
+const TwilioValidator  = require('../twilio/TwilioValidator');
 const TwilioController = require('./TwilioController');
 
 class ExpressServer {
-  constructor(dbConfig, twilioConfig) {
-    this.app = express();
-    this.port = process.env.PORT || 3000;
+  constructor(twilioConfig) {
+    this.app         = express();
+    this.port        = process.env.PORT || 3000;
     this.twilioConfig = twilioConfig;
 
-    // Inicializar repositorios
-    const ClienteRepository = require('../db/ClienteRepository');
-    const MensajeRepository  = require('../db/MensajeRepository');
-    const SesionChatRepository  = require('../db/SesionChatRepository');
+    // Inicializa repositorios con el orden correcto
+    const ClienteRepository    = require('../db/ClienteRepository');
+    const SesionChatRepository = require('../db/SesionChatRepository');
+    const MensajeRepository    = require('../db/MensajeRepository');
 
     this.repos = {
       customerRepo: new ClienteRepository(),
-      sessionRepo : new MensajeRepository(),
-      messageRepo : new SesionChatRepository()
+      sessionRepo : new SesionChatRepository(),
+      messageRepo : new MensajeRepository()
     };
 
-    // Middleware y rutas
+    // Middlewares
     this.app.use(bodyParser.urlencoded({ extended: false }));
+
+    // Ruta /webhook con validación de firma y controlador
     this.app.post(
       '/webhook',
       TwilioValidator(this.twilioConfig),
-      TwilioController(this.repos, this.twilioConfig)
+      TwilioController(this.repos)
     );
   }
 

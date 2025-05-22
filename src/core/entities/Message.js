@@ -1,13 +1,13 @@
 /**
- * Entidad Message
+ * Entidad Message (mensaje)
  */
 class Message {
   constructor({ id, sessionId, timestamp, direction, content }) {
-    this.id = id;
+    this.id        = id;
     this.sessionId = sessionId;
-    this.timestamp = timestamp;  // Date
-    this.direction = direction;  // 'INBOUND' | 'OUTBOUND'
-    this.content = content;      // String
+    this.timestamp = timestamp;     // corresponde a FechaEnvio
+    this.direction = direction;     // 'Entrante' | 'Saliente'
+    this.content   = content;
   }
 }
 
