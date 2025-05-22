@@ -10,14 +10,14 @@ class ExpressServer {
     this.twilioConfig = twilioConfig;
 
     // Inicializar repositorios
-    const MySQLCustomerRepository = require('../db/MySQLCustomerRepository');
-    const MySQLSessionRepository  = require('../db/MySQLSessionRepository');
-    const MySQLMessageRepository  = require('../db/MySQLMessageRepository');
+    const ClienteRepository = require('../db/ClienteRepository');
+    const MensajeRepository  = require('../db/MensajeRepository');
+    const SesionChatRepository  = require('../db/SesionChatRepository');
 
     this.repos = {
-      customerRepo: new MySQLCustomerRepository(),
-      sessionRepo : new MySQLSessionRepository(),
-      messageRepo : new MySQLMessageRepository()
+      customerRepo: new ClienteRepository(),
+      sessionRepo : new MensajeRepository(),
+      messageRepo : new SesionChatRepository()
     };
 
     // Middleware y rutas
