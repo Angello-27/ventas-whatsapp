@@ -15,9 +15,9 @@ class ExpressServer {
     const MensajeRepository    = require('../db/MensajeRepository');
 
     this.repos = {
-      customerRepo: new ClienteRepository(),
-      sessionRepo : new SesionChatRepository(),
-      messageRepo : new MensajeRepository()
+      clienteRepo: new ClienteRepository(),
+      sesionChatRepo : new SesionChatRepository(),
+      mensajeRepo : new MensajeRepository()
     };
 
     // Middlewares

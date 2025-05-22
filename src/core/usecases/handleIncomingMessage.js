@@ -3,31 +3,34 @@
  */
 async function handleIncomingMessage(
   { from, body },
-  { customerRepo, sessionRepo, messageRepo }
+  { clienteRepo, sesionChatRepo, mensajeRepo }
 ) {
   // 1) Cliente: busca por teléfono o crea uno nuevo
-  let customer = await customerRepo.findByTelefono(from);
-  if (!customer) {
-    customer = await customerRepo.create({
-      name: null,
-      phoneNumber: from,
-      email: null,
-      address: null,
-      type: 'Nuevo'
+  let cliente = await clienteRepo.findByTelefono(from);
+  if (!cliente) {
+    cliente = await clienteRepo.create({
+      nombre:     null,
+      sexo:       null,
+      telefono:   from,
+      email:      null,
+      direccion:  null,
+      tipoCliente:'Nuevo'
     });
   }
 
   // 2) Sesión: busca sesión activa o crea una nueva
-  let session = await sessionRepo.findActiveByClienteId(customer.id);
-  if (!session) {
-    session = await sessionRepo.create({ customerId: customer.id });
+  let sesion = await sesionChatRepo.findActiveByClienteId(cliente.id);
+  if (!sesion) {
+    // ojo: aquí debe ser clienteId, no customerId
+    sesion = await sesionChatRepo.create({ clienteId: cliente.id });
   }
 
   // 3) Mensaje: guarda como 'Entrante'
-  await messageRepo.save({
-    sessionId: session.id,
-    direction: 'Entrante',
-    content: body
+  await mensajeRepo.save({
+    // ojo: aquí sesionId en lugar de sessionId
+    sesionId:  sesion.id,
+    direccion: 'Entrante',
+    contenido: body   // en lugar de content
   });
 
   // 4) Respuesta automática
