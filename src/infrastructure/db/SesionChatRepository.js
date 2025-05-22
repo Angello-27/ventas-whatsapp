@@ -7,12 +7,14 @@ class SesionChatRepository {
   async findActiveByCustomerId(customerId) {
     const [rows] = await pool.query(
       `SELECT 
-         SesionId   AS id,
-         ClienteId  AS customerId,
-         IniciadoEn AS startedAt,
-         FinalizadoEn AS endedAt
+         SesionId      AS id,
+         ClienteId     AS customerId,
+         IniciadoEn    AS startedAt,
+         FinalizadoEn  AS endedAt
        FROM sesionchat
-       WHERE ClienteId = ? AND endedAt IS NULL AND isActive = 1`,
+       WHERE ClienteId = ? 
+         AND FinalizadoEn IS NULL 
+         AND isActive = 1`,
       [customerId]
     );
     if (rows.length === 0) return null;
@@ -28,10 +30,10 @@ class SesionChatRepository {
     );
     const [rows] = await pool.query(
       `SELECT 
-         SesionId   AS id,
-         ClienteId  AS customerId,
-         IniciadoEn AS startedAt,
-         FinalizadoEn AS endedAt
+         SesionId      AS id,
+         ClienteId     AS customerId,
+         IniciadoEn    AS startedAt,
+         FinalizadoEn  AS endedAt
        FROM sesionchat
        WHERE SesionId = ?`,
       [result.insertId]
