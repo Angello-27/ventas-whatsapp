@@ -1,0 +1,45 @@
+# Dependencias
+/node_modules/
+
+# Archivos de lock de npm/yarn
+package-lock.json
+yarn.lock
+
+# Entornos
+.env
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# Directorios de build
+/dist/
+/build/
+/out/
+/coverage/
+/.nyc_output/
+
+# Cachés
+.cache/
+/.tmp/
+/.DS_Store
+
+# PIDs y “seeds”
+*.pid
+*.seed
+*.pid.lock
+
+# Configs de IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Sistema
+Thumbs.db
