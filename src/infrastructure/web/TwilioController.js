@@ -1,15 +1,22 @@
 const { MessagingResponse } = require('twilio').twiml;
-const handleIncomingMessage  = require('../../core/usecases/handleIncomingMessage');
+const handleIncomingMessage = require('../../core/usecases/handleIncomingMessage');
 
 /**
  * Controlador HTTP para /webhook
  * Solo necesita repos y usa handleIncomingMessage
  */
-module.exports = (repos) => async (req, res) => {
+module.exports = (repos, openaiClient) => async (req, res) => {
   const from = req.body.From;
   const body = req.body.Body;
+
   try {
-    const reply = await handleIncomingMessage({ from, body }, repos);
+    // Llamamos al use case pasando también openaiClient
+    const reply = await handleIncomingMessage(
+      { from, body },
+      repos,
+      openaiClient
+    );
+
     const twiml = new MessagingResponse();
     twiml.message(reply);
     res.set('Content-Type', 'text/xml');

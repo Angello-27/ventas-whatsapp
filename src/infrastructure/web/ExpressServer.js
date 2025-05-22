@@ -4,7 +4,7 @@ const TwilioValidator  = require('../twilio/TwilioValidator');
 const TwilioController = require('./TwilioController');
 
 class ExpressServer {
-  constructor(twilioConfig) {
+  constructor(twilioConfig, openaiConfig) {
     this.app         = express();
     this.port        = process.env.PORT || 3000;
     this.twilioConfig = twilioConfig;
@@ -14,11 +14,16 @@ class ExpressServer {
     const SesionChatRepository = require('../db/SesionChatRepository');
     const MensajeRepository    = require('../db/MensajeRepository');
 
+    // Cliente OpenAI
+    const OpenAIClient   = require('../openai/OpenAIClient');
+
     this.repos = {
       clienteRepo: new ClienteRepository(),
       sesionChatRepo : new SesionChatRepository(),
       mensajeRepo : new MensajeRepository()
     };
+
+    this.openaiClient = new OpenAIClient(openaiConfig);
 
     // Middlewares
     this.app.use(bodyParser.urlencoded({ extended: false }));
@@ -27,7 +32,7 @@ class ExpressServer {
     this.app.post(
       '/webhook',
       TwilioValidator(this.twilioConfig),
-      TwilioController(this.repos)
+      TwilioController(this.repos, this.openaiClient)
     );
   }
 
