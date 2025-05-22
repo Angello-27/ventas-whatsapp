@@ -1,52 +1,45 @@
-const SesionChatEntity = require('../../core/entities/ChatSession');
-const mysql       = require('mysql2/promise');
-const dbConfig    = require('../../config/dbConfig');
-const pool        = mysql.createPool(dbConfig);
+const SesionChatEntity  = require('../../core/entities/SesionChat');
+const mysql             = require('mysql2/promise');
+const dbConfig          = require('../../config/dbConfig');
+const pool              = mysql.createPool(dbConfig);
 
 class SesionChatRepository {
-  async findActiveByCustomerId(customerId) {
+  async findActiveByClienteId(clienteId) {
     const [rows] = await pool.query(
-      `SELECT 
-         SesionId      AS id,
-         ClienteId     AS customerId,
-         IniciadoEn    AS startedAt,
-         FinalizadoEn  AS endedAt
+      `SELECT
+         SesionId     AS id,
+         ClienteId    AS clienteId,
+         IniciadoEn   AS iniciadoEn,
+         FinalizadoEn AS finalizadoEn,
+         createdAt,
+         updatedAt,
+         isActive
        FROM sesionchat
        WHERE ClienteId = ? 
          AND FinalizadoEn IS NULL 
          AND isActive = 1`,
-      [customerId]
+      [clienteId]
     );
-    if (rows.length === 0) return null;
+    if (!rows.length) return null;
     return new SesionChatEntity(rows[0]);
   }
 
-  async create({ customerId }) {
-    const [result] = await pool.query(
-      `INSERT INTO sesionchat 
+  async create({ clienteId }) {
+    const [res] = await pool.query(
+      `INSERT INTO sesionchat
          (ClienteId, IniciadoEn, createdAt, updatedAt, isActive)
        VALUES (?, NOW(), NOW(), NOW(), 1)`,
-      [customerId]
+      [clienteId]
     );
-    const [rows] = await pool.query(
-      `SELECT 
-         SesionId      AS id,
-         ClienteId     AS customerId,
-         IniciadoEn    AS startedAt,
-         FinalizadoEn  AS endedAt
-       FROM sesionchat
-       WHERE SesionId = ?`,
-      [result.insertId]
-    );
-    return new SesionChatEntity(rows[0]);
+    return this.findActiveByClienteId(clienteId);
   }
 
-  async end(sessionId) {
+  async end(id) {
     await pool.query(
-      `UPDATE sesionchat 
-         SET FinalizadoEn = NOW(), updatedAt = NOW() 
+      `UPDATE sesionchat
+         SET FinalizadoEn = NOW(), updatedAt = NOW()
        WHERE SesionId = ?`,
-      [sessionId]
+      [id]
     );
   }
 }

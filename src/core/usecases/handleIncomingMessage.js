@@ -6,7 +6,7 @@ async function handleIncomingMessage(
   { customerRepo, sessionRepo, messageRepo }
 ) {
   // 1) Cliente: busca por teléfono o crea uno nuevo
-  let customer = await customerRepo.findByPhoneNumber(from);
+  let customer = await customerRepo.findByTelefono(from);
   if (!customer) {
     customer = await customerRepo.create({
       name: null,
@@ -18,7 +18,7 @@ async function handleIncomingMessage(
   }
 
   // 2) Sesión: busca sesión activa o crea una nueva
-  let session = await sessionRepo.findActiveByCustomerId(customer.id);
+  let session = await sessionRepo.findActiveByClienteId(customer.id);
   if (!session) {
     session = await sessionRepo.create({ customerId: customer.id });
   }
