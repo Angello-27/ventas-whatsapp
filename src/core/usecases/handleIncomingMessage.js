@@ -18,7 +18,8 @@ async function handleIncomingMessage(
     campanaItemsRepo,
     envaseInfoRepo,
     productoHierarchyRepo,
-    stockPrecioRepo
+    stockPrecioRepo,
+    chatFullRepo
   },
   openaiClient
 ) {
@@ -40,6 +41,15 @@ async function handleIncomingMessage(
   if (!sesion) {
     sesion = await sesionChatRepo.create({ clienteId: cliente.id });
     openaiClient.resetHistory();
+  } else {
+    // Recuperar todos los mensajes de esta sesión (entrantes y salientes)
+    const historyRows = await chatFullRepo.findBySesionId(sesion.id);
+    historyRows.forEach(msg => {
+      openaiClient.chatHistory.push({
+        role: msg.direccion === 'Entrante' ? 'user' : 'assistant',
+        content: msg.contenido
+      });
+    });
   }
 
   // 3) GUARDAR MENSAJE ENTRANTE
@@ -134,6 +144,8 @@ indicando marca y categoría.
 
   const userPrompt = `
 Cliente dijo: "${body}"
+
+Historial + contexto ya enviado automáticamente por openaiClient
 
 Promociones y sus ítems:
 ${promoText}

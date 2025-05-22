@@ -20,6 +20,7 @@ class ExpressServer {
     const VistaItemOrdenFullRepository = require('../db/VistaItemOrdenFullRepository');
     const VistaProductoHierarchyRepository = require('../db/VistaProductoHierarchyRepository');
     const VistaStockPrecioRepository = require('../db/VistaStockPrecioRepository');
+    const VistaChatFullRepository = require('../db/VistaChatFullRepository');
 
     // Cliente OpenAI
     const OpenAIClient = require('../openai/OpenAIClient');
@@ -29,6 +30,7 @@ class ExpressServer {
       sesionChatRepo: new SesionChatRepository(),
       mensajeRepo: new MensajeRepository(),
 
+      chatFullRepo: new VistaChatFullRepository(),
       campanaAmbitoRepo: new VistaCampanaAmbitoRepository(),
       campanaItemsRepo: new VistaCampanaItemsRepository(),
       envaseInfoRepo: new VistaEnvaseInfoRepository(),
