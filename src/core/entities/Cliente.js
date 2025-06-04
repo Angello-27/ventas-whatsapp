@@ -1,19 +1,23 @@
+// core/entities/Cliente.js
+
 class Cliente {
-  constructor({ 
-    id, nombre, sexo, telefono, email, direccion, tipoCliente, 
-    createdAt, updatedAt, isActive 
-  }) {
-    this.id           = id;           // ClienteId
-    this.nombre       = nombre;       // Nombre
-    this.sexo         = sexo;         // Sexo
-    this.telefono     = telefono;     // Telefono
-    this.email        = email;        // Email
-    this.direccion    = direccion;    // Direccion
-    this.tipoCliente  = tipoCliente;  // TipoCliente
-    this.createdAt    = createdAt;
-    this.updatedAt    = updatedAt;
-    this.isActive     = Boolean(isActive);
-  }
+    /**
+     * @param {Object} params
+     * @param {number} params.clienteId
+     * @param {string} params.telefono
+     * @param {string|null} params.nombre
+     * @param {string|null} params.email
+     * @param {Date|null} params.createdAt
+     * @param {Date|null} params.updatedAt
+     */
+    constructor({ clienteId, telefono, nombre = null, email = null, createdAt = null, updatedAt = null }) {
+        this.clienteId = clienteId;
+        this.telefono = telefono;
+        this.nombre = nombre;
+        this.email = email;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }
 
 module.exports = Cliente;
