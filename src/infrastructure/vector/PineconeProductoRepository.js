@@ -16,16 +16,19 @@ class PineconeProductoRepository {
     }
 
     /**
-     * Toma todos los productos activos de MySQL, genera embeddings via OpenAI y hace upsert en Pinecone (namespace="productos").
+     * Toma todos los productos activos desde la vista plana (Marca+Categoría incluidos),
+     * genera embeddings via OpenAI y hace upsert en Pinecone (namespace="productos").
      */
     async syncAllToVectorDB() {
+        // Ahora usamos el repositorio que lee de la vista plana:
         const mysqlRepo = new MysqlProductoRepository();
         const productos = await mysqlRepo.findAllActive();
-        // productos: [ { productoId, nombre, descripcion, categoriaId, marcaId, … }, … ]
+        // productos: [ { productoId, nombre, genero, marcaId, marcaNombre, logoUrl, categoriaId, categoriaNombre, createdAt }, … ]
 
         const vectors = [];
         for (const prod of productos) {
-            const textToEmbed = `${prod.nombre}: ${prod.descripcion || ''}`;
+            // Generamos un texto que incluya marcaNombre y categoriaNombre:
+            const textToEmbed = `${prod.nombre} (${prod.genero}) - Marca: ${prod.marcaNombre}, Categoría: ${prod.categoriaNombre}`;
             const embeddingResponse = await this.openaiClient.embedText(textToEmbed);
             const vectorValues = embeddingResponse.data[0].embedding;
 
@@ -34,8 +37,10 @@ class PineconeProductoRepository {
                 values: vectorValues,
                 metadata: {
                     nombre: prod.nombre,
-                    categoriaId: prod.categoriaId,
-                    marcaId: prod.marcaId
+                    marcaNombre: prod.marcaNombre,
+                    logoUrl: prod.logoUrl,
+                    categoriaNombre: prod.categoriaNombre,
+                    genero: prod.genero
                 }
             });
         }
@@ -51,12 +56,9 @@ class PineconeProductoRepository {
     }
 
     /**
-     * Búsqueda semántica en Pinecone a partir de un texto, devuelve
-     * topK productos junto con su score.
-     *
-     * @param {string} queryText
-     * @param {number} [topK=3]
-     * @returns {Promise<Array<{ producto: { productoId:number, nombre:string, categoriaId:number, marcaId:number }, score:number }>>}
+     * Búsqueda semántica en Pinecone a partir de un texto.  
+     * Devuelve topK resultados con { producto: 
+     * { productoId, nombre, marcaNombre, categoriaNombre, logoUrl, genero }, score }.
      */
     async semanticSearch(queryText, topK = 3) {
         const embeddingResponse = await this.openaiClient.embedText(queryText);
@@ -77,8 +79,10 @@ class PineconeProductoRepository {
                 producto: {
                     productoId: parseInt(match.id, 10),
                     nombre: match.metadata.nombre,
-                    categoriaId: match.metadata.categoriaId,
-                    marcaId: match.metadata.marcaId
+                    marcaNombre: match.metadata.marcaNombre,
+                    logoUrl: match.metadata.logoUrl,
+                    categoriaNombre: match.metadata.categoriaNombre,
+                    genero: match.metadata.genero
                 },
                 score: match.score
             });
