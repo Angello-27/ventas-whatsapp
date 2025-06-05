@@ -1,7 +1,7 @@
 // src/core/entities/Producto.js
 
 class Producto {
-    /**logoUrl
+    /**
      * @param {Object} params
      * @param {number} params.productoId
      * @param {string} params.nombre

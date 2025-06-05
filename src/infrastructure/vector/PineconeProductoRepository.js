@@ -11,23 +11,21 @@ class PineconeProductoRepository {
     constructor(pineconeInstance, openaiClient) {
         this.pinecone = pineconeInstance;
         this.openaiClient = openaiClient;
-        // Asignamos el índice (asumimos que ya existe)
         this.index = this.pinecone.Index(pineconeConfig.indexName);
     }
 
     /**
-     * Toma todos los productos activos desde la vista plana (Marca+Categoría incluidos),
+     * Toma todos los productos activos desde la vista plana (Marca+Categoría+logo incluidos),
      * genera embeddings via OpenAI y hace upsert en Pinecone (namespace="productos").
      */
     async syncAllToVectorDB() {
-        // Ahora usamos el repositorio que lee de la vista plana:
         const mysqlRepo = new MysqlProductoRepository();
         const productos = await mysqlRepo.findAllActive();
-        // productos: [ { productoId, nombre, genero, marcaId, marcaNombre, logoUrl, categoriaId, categoriaNombre, createdAt }, … ]
+        // productos: [{ productoId, nombre, genero, marcaId, marcaNombre, logoUrl, categoriaId, categoriaNombre, createdAt }, …]
 
         const vectors = [];
         for (const prod of productos) {
-            // Generamos un texto que incluya marcaNombre y categoriaNombre:
+            // Incluimos marcaNombre, categoriaNombre y logoUrl al texto a embeddar si queremos:
             const textToEmbed = `${prod.nombre} (${prod.genero}) - Marca: ${prod.marcaNombre}, Categoría: ${prod.categoriaNombre}`;
             const embeddingResponse = await this.openaiClient.embedText(textToEmbed);
             const vectorValues = embeddingResponse.data[0].embedding;
@@ -57,8 +55,8 @@ class PineconeProductoRepository {
 
     /**
      * Búsqueda semántica en Pinecone a partir de un texto.  
-     * Devuelve topK resultados con { producto: 
-     * { productoId, nombre, marcaNombre, categoriaNombre, logoUrl, genero }, score }.
+     * Devuelve topK resultados con:
+     *   { producto: { productoId, nombre, marcaNombre, categoriaNombre, logoUrl, genero }, score }.
      */
     async semanticSearch(queryText, topK = 3) {
         const embeddingResponse = await this.openaiClient.embedText(queryText);

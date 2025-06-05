@@ -11,16 +11,16 @@ class MysqlProductoRepository extends IProductoRepository {
      */
     async findAllActive() {
         const [rows] = await pool.query(
-            `SELECT *
-       FROM vistaproductos`
+            `SELECT * FROM vistaproductos`
         );
+
         return rows.map(r => new Producto({
             productoId: r.productoId,
             nombre: r.nombre,
             genero: r.genero,
             marcaId: r.marcaId,
             marcaNombre: r.marcaNombre,
-            logoUrl: logoUrl,
+            logoUrl: r.logoUrl,
             categoriaId: r.categoriaId,
             categoriaNombre: r.categoriaNombre,
             createdAt: r.createdAt
@@ -34,9 +34,7 @@ class MysqlProductoRepository extends IProductoRepository {
      */
     async findById(productoId) {
         const [rows] = await pool.query(
-            `SELECT *
-       FROM vistaproductos
-       WHERE productoId = ?`,
+            `SELECT * FROM vistaproductos WHERE productoId = ?`,
             [productoId]
         );
         if (!rows.length) return null;
@@ -47,61 +45,11 @@ class MysqlProductoRepository extends IProductoRepository {
             genero: r.genero,
             marcaId: r.marcaId,
             marcaNombre: r.marcaNombre,
-            logoUrl: logoUrl,
+            logoUrl: r.logoUrl,
             categoriaId: r.categoriaId,
             categoriaNombre: r.categoriaNombre,
             createdAt: r.createdAt
         });
-    }
-
-    /**
-     * Busca los productos activos filtrando por marcaId (en la vista plana).
-     * @param {number} marcaId
-     * @returns {Promise<Producto[]>}
-     */
-    async findByMarca(marcaId) {
-        const [rows] = await pool.query(
-            `SELECT *
-       FROM vistaproductos
-       WHERE marcaId = ?`,
-            [marcaId]
-        );
-        return rows.map(r => new Producto({
-            productoId: r.productoId,
-            nombre: r.nombre,
-            genero: r.genero,
-            marcaId: r.marcaId,
-            marcaNombre: r.marcaNombre,
-            logoUrl: logoUrl,
-            categoriaId: r.categoriaId,
-            categoriaNombre: r.categoriaNombre,
-            createdAt: r.createdAt
-        }));
-    }
-
-    /**
-     * Busca los productos activos filtrando por categoríaId (en la vista plana).
-     * @param {number} categoriaId
-     * @returns {Promise<Producto[]>}
-     */
-    async findByCategoria(categoriaId) {
-        const [rows] = await pool.query(
-            `SELECT *
-       FROM vistaproductos
-       WHERE categoriaId = ?`,
-            [categoriaId]
-        );
-        return rows.map(r => new Producto({
-            productoId: r.productoId,
-            nombre: r.nombre,
-            genero: r.genero,
-            marcaId: r.marcaId,
-            marcaNombre: r.marcaNombre,
-            logoUrl: logoUrl,
-            categoriaId: r.categoriaId,
-            categoriaNombre: r.categoriaNombre,
-            createdAt: r.createdAt
-        }));
     }
 }
 
