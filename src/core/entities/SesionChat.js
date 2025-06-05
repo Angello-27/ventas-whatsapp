@@ -1,14 +1,14 @@
-// core/entities/SesionChat.js
+// src/core/entities/SesionChat.js
 
 class SesionChat {
     /**
      * @param {Object} params
      * @param {number} params.sesionId
      * @param {number} params.clienteId
-     * @param {Date|null} params.iniciadoEn
+     * @param {Date} params.iniciadoEn
      * @param {Date|null} params.finalizadoEn
      * @param {boolean} params.isActive
-     * @param {Date|null} params.createdAt
+     * @param {Date} params.createdAt
      * @param {Date|null} params.updatedAt
      */
     constructor({

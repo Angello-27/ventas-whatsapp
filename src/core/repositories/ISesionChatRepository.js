@@ -1,4 +1,4 @@
-// core/repositories/ISesionChatRepository.js
+// src/core/repositories/ISesionChatRepository.js
 
 /**
  * Interfaz para acceso a la entidad SesionChat.

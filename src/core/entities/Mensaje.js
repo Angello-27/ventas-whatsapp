@@ -1,4 +1,4 @@
-// core/entities/Mensaje.js
+// src/core/entities/Mensaje.js
 
 class Mensaje {
     /**
@@ -7,26 +7,16 @@ class Mensaje {
      * @param {number} params.sesionId
      * @param {'Entrante'|'Saliente'} params.direccion
      * @param {string} params.contenido
-     * @param {Date|null} params.timestamp
-     * @param {Date|null} params.createdAt
-     * @param {Date|null} params.updatedAt
+     * @param {Date} params.createdAt
+     * @param {boolean} params.isActive
      */
-    constructor({
-        mensajeId,
-        sesionId,
-        direccion,
-        contenido,
-        timestamp = null,
-        createdAt = null,
-        updatedAt = null
-    }) {
+    constructor({ mensajeId, sesionId, direccion, contenido, createdAt = null, isActive = true }) {
         this.mensajeId = mensajeId;
         this.sesionId = sesionId;
         this.direccion = direccion;
         this.contenido = contenido;
-        this.timestamp = timestamp;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+        this.isActive = isActive;
     }
 }
 

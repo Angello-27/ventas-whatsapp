@@ -75,10 +75,10 @@ class PineconeVarianteRepository {
                     productoNombre: v.productoNombre,
                     color: v.color,
                     talla: v.talla,
-                    material: v.material,
+                    material: v.material || '',
                     precioVenta: v.precioVenta,
                     cantidad: v.cantidad,
-                    imagenPrincipalUrl: v.imagenPrincipalUrl
+                    imagenPrincipalUrl: v.imagenPrincipalUrl || ''
                 }
             });
         }

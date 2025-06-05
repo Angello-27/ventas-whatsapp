@@ -38,7 +38,7 @@ async function searchVariants(body, repos, topK = 3) {
             talla,
             precioVenta
         } = variante;
-        return `• ${sku} – ${productoNombre} (Color: ${color}, Talla: ${talla}) — Precio: ${precioVenta.toFixed(2)} — score: ${score.toFixed(2)}`;
+        return `• ${sku} – ${productoNombre} (Color: ${color}, Talla: ${talla}) — Precio: ${precioVenta} — score: ${score.toFixed(2)}`;
     });
 
     return lines.join('\n');

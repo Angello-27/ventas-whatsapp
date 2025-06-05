@@ -21,9 +21,9 @@ class ExpressServer {
     this.openaiClient = chatClient;
 
     // 2) Lanzamos la sincronización de vectores SIN bloquear el arranque:
-    syncAllIfNeeded(pineconeRepos)
+    /*syncAllIfNeeded(pineconeRepos)
       .then(() => console.log('✅ Sincronización inicial de Pinecone (pendiente).'))
-      .catch(err => console.error('❌ Error en syncAllIfNeeded:', err));
+      .catch(err => console.error('❌ Error en syncAllIfNeeded:', err));*/
 
     // Middlewares
     this.app.use(bodyParser.urlencoded({ extended: false }));
