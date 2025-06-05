@@ -4,7 +4,7 @@ const OpenAI = require('openai');
 const {
   buildResumenPrompt,
   buildSystemCompactador
-} = require('./prompts/chatPrompts');
+} = require('./prompts/baseChatPrompt');
 
 class OpenAIClient {
   constructor({ apiKey, model }) {

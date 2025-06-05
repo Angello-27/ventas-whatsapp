@@ -6,12 +6,24 @@ const MysqlProductoRepository = require('../db/MysqlProductoRepository');
 class PineconeProductoRepository {
     /**
      * @param {import('@pinecone-database/pinecone').PineconeClient} pineconeInstance 
-     * @param {{ embedText: (text: string) => Promise<any> }} openaiClient 
+     * @param {{ embedText: (text: string) => Promise<any> }} embedClient 
      */
-    constructor(pineconeInstance, openaiClient) {
+    constructor(pineconeInstance, embedClient) {
         this.pinecone = pineconeInstance;
-        this.openaiClient = openaiClient;
+        this.embedClient = embedClient;
         this.index = this.pinecone.Index(pineconeConfig.indexName);
+    }
+
+    /**
+   * Devuelve true si el índice no tiene vectores (o menos de 1).
+   * Usa describeIndexStats({ namespace }) para saber cuántos vectores hay.
+   */
+    async needsSync() {
+        // describeIndexStats retorna un objeto con "namespaces"
+        // Ej: { namespaces: { productos: { vector_count: 123, ... } }, ... }
+        const stats = await this.index.describeIndexStats({ describeIndexStatsRequest: { namespace: 'productos' } });
+        const count = stats.namespaces?.productos?.vector_count || 0;
+        return count === 0;
     }
 
     /**
@@ -27,7 +39,7 @@ class PineconeProductoRepository {
         for (const prod of productos) {
             // Incluimos marcaNombre, categoriaNombre y logoUrl al texto a embeddar si queremos:
             const textToEmbed = `${prod.nombre} (${prod.genero}) - Marca: ${prod.marcaNombre}, Categoría: ${prod.categoriaNombre}`;
-            const embeddingResponse = await this.openaiClient.embedText(textToEmbed);
+            const embeddingResponse = await this.embedClient.embedText(textToEmbed);
             const vectorValues = embeddingResponse.data[0].embedding;
 
             vectors.push({
@@ -59,7 +71,7 @@ class PineconeProductoRepository {
      *   { producto: { productoId, nombre, marcaNombre, categoriaNombre, logoUrl, genero }, score }.
      */
     async semanticSearch(queryText, topK = 3) {
-        const embeddingResponse = await this.openaiClient.embedText(queryText);
+        const embeddingResponse = await this.embedClient.embedText(queryText);
         const queryVector = embeddingResponse.data[0].embedding;
 
         const queryResponse = await this.index.query({

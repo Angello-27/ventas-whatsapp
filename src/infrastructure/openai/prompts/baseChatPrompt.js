@@ -1,45 +1,32 @@
-// src/infrastructure/openai/prompts/baseChatPrompt.js
+// src/infrastructure/openai/prompts/chatPrompts.js
 
 /**
- * buildSystemChatPrompt:
- *   Devuelve el “prompt de sistema” que describe el rol del asistente.
- *   Siempre va como primer mensaje en cada request a chatClient.chat().
+ * Toma un texto de conversación (Usuario / Asistente) y devuelve
+ * un prompt pidiéndole a OpenAI un resumen breve.
+ *
+ * @param {string} convoText – Texto con las líneas de conversación a resumir.
+ * @returns {string}
  */
-function buildSystemChatPrompt() {
-    return `
-Eres un asistente de ventas de ropa.
-Tu tarea es: 
- • Recomendar productos específicos según la consulta del cliente,
-   indicando marca, categoría y, si aplica, precio.
- • Ofrecer promociones vigentes si existen (aunque en esta prueba
-   inicial no buscaremos promociones; solo devolvemos productos).
- • Mantén un tono amable y conciso.
+module.exports.buildResumenPrompt = function (convoText) {
+  return `
+Eres un sistema que resume conversaciones de manera concisa. 
+A continuación verás interacciones entre Usuario y Asistente.  
+Resúmelo en un único párrafo, manteniendo los puntos clave y omitiendo detalles triviales:
 
-`.trim();
-}
+### Conversación:
+${convoText}
+### Fin de conversación.
+
+Resumen:
+  `.trim();
+};
 
 /**
- * buildUserChatPrompt:
- *   Recibe:
- *     - from: número de teléfono del cliente (string).
- *     - body: texto original que envió el cliente.
- *     - productListText: la lista de productos formateada
- *                        (o mensaje “no encontré…”).
- *     - promoText: cualquier texto adicional que quieras agregar al final
- *   Construye y devuelve un prompt (string) para enviarle a GPT.
+ * Simple prompt de sistema para indicarle a GPT que actúe como
+ * “compactador” de hilos de chat.
+ *
+ * @returns {string}
  */
-function buildUserChatPrompt({ from, body, productListText, promoText }) {
-    return `
-Cliente (${from}) escribió: "${body}"
-
-Productos relevantes:
-${productListText}
-
-${promoText}
-`.trim();
-}
-
-module.exports = {
-    buildSystemChatPrompt,
-    buildUserChatPrompt
+module.exports.buildSystemCompactador = function () {
+  return 'Eres un compactador de hilos de chat.';
 };

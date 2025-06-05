@@ -34,15 +34,13 @@ function buildDeps() {
         model: embedModel
     });
 
-    // 3) Ya tenemos UNA sola instancia de Pinecone (por el require('../vector/PineconeClient'))
-
-    // 4) Instanciamos repositorios MySQL
+    // 3) Instanciamos repositorios MySQL
     const mysqlRepos = {
         productoRepo: new MysqlProductoRepository()
         // … aquí puedes agregar clienteRepo, sesionChatRepo, mensajeRepo, etc.
     };
 
-    // 5) Instanciamos repositorios Pinecone, pasándoles embedClient:
+    // 4) Instanciamos repositorios Pinecone, pasándoles embedClient:
     const pineconeRepos = {
         pineProductoRepo: new PineconeProductoRepository(pinecone, embedClient)
         // … aquí agregarías pineVarianteRepo, pinePromocionRepo, etc., todos con (pinecone, embedClient)
@@ -54,7 +52,8 @@ function buildDeps() {
             ...pineconeRepos
         },
         chatClient,   // para manejar conversaciones
-        embedClient   // para generar embeddings
+        embedClient,   // para generar embeddings
+        pineconeRepos // Exponemos solo el grupo Pinecone para sincronizar más tarde
     };
 }
 

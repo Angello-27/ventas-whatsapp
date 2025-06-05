@@ -1,7 +1,7 @@
 // src/core/usecases/handleIncomingMessage.js
 
-const { buildSystemChatPrompt, buildUserChatPrompt } = require('../../infrastructure/openai/prompts/baseChatPrompt');
-const { searchProducts } = require('./helpers/productSearch');
+const { buildSystemChatPrompt, buildUserChatPrompt } = require('../../infrastructure/openai/prompts/chatPrompts');
+const { searchProducts } = require('./services/productSearch');
 
 /**
  * Caso de uso: procesa un mensaje entrante de WhatsApp.

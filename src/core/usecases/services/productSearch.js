@@ -13,7 +13,7 @@
  * @param {number} [topK=3]   Cuántos resultados traer como máximo.
  * @returns {Promise<string>} Un bloque de texto (listas de “• nombre (Marca, Categoría)”)
  */
-async function searchProductsSemantic(body, repos, topK = 3) {
+async function searchProducts(body, repos, topK = 3) {
     // 1) Si no existe el repositorio de Pinecone, retorna un mensaje de fallback
     if (!repos.pineProductoRepo || typeof repos.pineProductoRepo.semanticSearch !== 'function') {
         return 'Lo siento, aún no puedo buscar productos en este momento.';
