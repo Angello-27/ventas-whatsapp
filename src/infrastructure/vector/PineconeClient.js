@@ -42,8 +42,13 @@ async function createAndInitClient() {
         });
         console.log(`🟢 Índice "${pineconeConfig.indexName}" creado en Pinecone.`);
     } catch (err) {
-        // Si ya existe, Pinecone arroja un error cuyo mensaje contiene “AlreadyExists”
-        if (err.message?.includes('AlreadyExists')) {
+        // Pinecone devuelve 409 con code "ALREADY_EXISTS" si el índice ya existe.
+        const alreadyExists =
+            err.code === 'ALREADY_EXISTS' ||
+            err.error?.code === 'ALREADY_EXISTS' ||
+            (typeof err.message === 'string' && err.message.includes('ALREADY_EXISTS'));
+
+        if (alreadyExists) {
             console.log(`🟡 El índice "${pineconeConfig.indexName}" ya existía → omitiendo creación.`);
         } else {
             console.error('❌ Error creando índice en Pinecone:', err);

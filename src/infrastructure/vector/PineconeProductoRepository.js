@@ -13,19 +13,31 @@ class PineconeProductoRepository {
         this.embedClient = embedClient;
     }
 
+    /**
+   * Devuelve true si la namespace "productos" NO tiene vectores (totalVectorCount === 0).
+   * Si la namespace no existe, también devuelve true para que luego se cree y se sincronicen.
+   */
     async needsSync() {
-        // 1) Esperamos a que se resuelva la promesa del cliente Pinecone
+        // 1) Obtenemos la instancia real de Pinecone
         const client = await this.pineconePromise;
-
-        // 2) Creamos el objeto Index (v6.x usa client.Index(indexName))
         const index = client.Index(pineconeConfig.indexName);
 
         try {
-            // 3) Llamamos a describeIndexStats o describeIndex para ver si existe y cuántos vectores tiene
-            const stats = await index.describeIndexStats({ describeIndexStatsRequest: {} });
-            return stats.totalVectorCount === 0;
+            // 2) Llamamos a describeIndexStats especificando la namespace "productos"
+            const statsResponse = await index.describeIndexStats({
+                describeIndexStatsRequest: {
+                    namespace: 'productos'
+                }
+            });
+
+            // statsResponse.namespaces["productos"].vectorCount es el número de vectores
+            const namespaceInfo = statsResponse.namespaces?.productos;
+            const count = namespaceInfo ? namespaceInfo.vectorCount : 0;
+
+            // Si no hay vectores (0), devolvemos true para sincronizar
+            return (count === 0);
         } catch (err) {
-            // Si el índice no existe, Pinecone lanza PineconeNotFoundError
+            // Si la namespace o el índice no existen, Pinecone arrojará PineconeNotFoundError
             if (err.name === 'PineconeNotFoundError') {
                 return true;
             }
@@ -33,6 +45,9 @@ class PineconeProductoRepository {
         }
     }
 
+    /**
+     * Resto de métodos (syncAllToVectorDB, semanticSearch) tal como los tienes.
+     */
     async syncAllToVectorDB() {
         // 1) Obtenemos la instancia real de PineconeClient
         const client = await this.pineconePromise;
@@ -64,10 +79,10 @@ class PineconeProductoRepository {
 
         // 4) Hacemos el upsert (v6.x):
         if (vectors.length > 0) {
-            await index.upsert({
-                vectors,
-                namespace: 'productos'
-            });
+            await index.upsert(
+                vectors,                  // <- array aquí
+                { namespace: 'productos' } // <- segundo parámetro con namespace
+            );
             console.log(`🟢 Se subieron ${vectors.length} vectores al índice "${pineconeConfig.indexName}".`);
         } else {
             console.log('⚠️ No hay vectores para subir (la lista está vacía).');
