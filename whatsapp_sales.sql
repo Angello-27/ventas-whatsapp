@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 04-06-2025 a las 13:24:14
+-- Tiempo de generación: 05-06-2025 a las 07:19:05
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -32,7 +32,6 @@ CREATE TABLE `categoria` (
   `Nombre` varchar(100) NOT NULL,
   `PadreCategoriaId` int(11) DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp(),
   `isActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -40,27 +39,27 @@ CREATE TABLE `categoria` (
 -- Volcado de datos para la tabla `categoria`
 --
 
-INSERT INTO `categoria` (`CategoriaId`, `Nombre`, `PadreCategoriaId`, `createdAt`, `updatedAt`, `isActive`) VALUES
-(1, 'Ropa Superior', NULL, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(2, 'Ropa Inferior', NULL, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(3, 'Calzado', NULL, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(4, 'Accesorios', NULL, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(5, 'Abrigos', NULL, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(6, 'Poleras', 1, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(7, 'Camisas', 1, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(8, 'Blusas', 1, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(9, 'Vestidos', 1, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(10, 'Pantalones', 2, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(11, 'Shorts', 2, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(12, 'Faldas', 2, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(13, 'Zapatos', 3, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(14, 'Sandalias', 3, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(15, 'Botas', 3, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(16, 'Gorras', 4, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(17, 'Bufandas', 4, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(18, 'Cinturones', 4, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(19, 'Parkas', 5, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1),
-(20, 'Chompas', 5, '2025-05-29 12:34:19', '2025-05-29 12:34:19', 1);
+INSERT INTO `categoria` (`CategoriaId`, `Nombre`, `PadreCategoriaId`, `createdAt`, `isActive`) VALUES
+(1, 'Ropa Superior', NULL, '2025-05-29 12:34:19', 1),
+(2, 'Ropa Inferior', NULL, '2025-05-29 12:34:19', 1),
+(3, 'Calzado', NULL, '2025-05-29 12:34:19', 1),
+(4, 'Accesorios', NULL, '2025-05-29 12:34:19', 1),
+(5, 'Abrigos', NULL, '2025-05-29 12:34:19', 1),
+(6, 'Poleras', 1, '2025-05-29 12:34:19', 1),
+(7, 'Camisas', 1, '2025-05-29 12:34:19', 1),
+(8, 'Blusas', 1, '2025-05-29 12:34:19', 1),
+(9, 'Vestidos', 1, '2025-05-29 12:34:19', 1),
+(10, 'Pantalones', 2, '2025-05-29 12:34:19', 1),
+(11, 'Shorts', 2, '2025-05-29 12:34:19', 1),
+(12, 'Faldas', 2, '2025-05-29 12:34:19', 1),
+(13, 'Zapatos', 3, '2025-05-29 12:34:19', 1),
+(14, 'Sandalias', 3, '2025-05-29 12:34:19', 1),
+(15, 'Botas', 3, '2025-05-29 12:34:19', 1),
+(16, 'Gorras', 4, '2025-05-29 12:34:19', 1),
+(17, 'Bufandas', 4, '2025-05-29 12:34:19', 1),
+(18, 'Cinturones', 4, '2025-05-29 12:34:19', 1),
+(19, 'Parkas', 5, '2025-05-29 12:34:19', 1),
+(20, 'Chompas', 5, '2025-05-29 12:34:19', 1);
 
 -- --------------------------------------------------------
 
@@ -74,7 +73,7 @@ CREATE TABLE `clientes` (
   `Nombre` varchar(150) DEFAULT NULL,
   `Email` varchar(150) DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp()
+  `isActive` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -88,7 +87,7 @@ CREATE TABLE `clientesintereses` (
   `ClienteId` int(11) NOT NULL,
   `Intereses` text NOT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp()
+  `isActive` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -102,7 +101,6 @@ CREATE TABLE `marca` (
   `Nombre` varchar(100) NOT NULL,
   `LogoUrl` varchar(255) DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp(),
   `isActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -110,12 +108,12 @@ CREATE TABLE `marca` (
 -- Volcado de datos para la tabla `marca`
 --
 
-INSERT INTO `marca` (`MarcaId`, `Nombre`, `LogoUrl`, `createdAt`, `updatedAt`, `isActive`) VALUES
-(1, 'Nike', 'https://logos.example.com/nike.png', '2025-05-29 12:33:21', '2025-05-29 12:33:21', 1),
-(2, 'Adidas', 'https://logos.example.com/adidas.png', '2025-05-29 12:33:21', '2025-05-29 12:33:21', 1),
-(3, 'Under Armour', 'https://logos.example.com/underarmour.png', '2025-05-29 12:33:21', '2025-05-29 12:33:21', 1),
-(4, 'Puma', 'https://logos.example.com/puma.png', '2025-05-29 12:33:21', '2025-05-29 12:33:21', 1),
-(5, 'Gap', 'https://logos.example.com/gap.png', '2025-05-29 12:33:21', '2025-05-29 12:33:21', 1);
+INSERT INTO `marca` (`MarcaId`, `Nombre`, `LogoUrl`, `createdAt`, `isActive`) VALUES
+(1, 'Nike', 'https://logos.example.com/nike.png', '2025-05-29 12:33:21', 1),
+(2, 'Adidas', 'https://logos.example.com/adidas.png', '2025-05-29 12:33:21', 1),
+(3, 'Under Armour', 'https://logos.example.com/underarmour.png', '2025-05-29 12:33:21', 1),
+(4, 'Puma', 'https://logos.example.com/puma.png', '2025-05-29 12:33:21', 1),
+(5, 'Gap', 'https://logos.example.com/gap.png', '2025-05-29 12:33:21', 1);
 
 -- --------------------------------------------------------
 
@@ -128,9 +126,8 @@ CREATE TABLE `mensajes` (
   `SesionId` int(11) NOT NULL,
   `Direccion` enum('Entrante','Saliente') NOT NULL,
   `Contenido` text NOT NULL,
-  `Timestamp` datetime DEFAULT current_timestamp(),
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp()
+  `isActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -145,7 +142,7 @@ CREATE TABLE `productoimagenes` (
   `Url` varchar(255) NOT NULL,
   `EsPrincipal` tinyint(1) DEFAULT 0,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp()
+  `isActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -161,7 +158,6 @@ CREATE TABLE `productos` (
   `MarcaId` int(11) NOT NULL,
   `CategoriaId` int(11) NOT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp(),
   `isActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -169,55 +165,55 @@ CREATE TABLE `productos` (
 -- Volcado de datos para la tabla `productos`
 --
 
-INSERT INTO `productos` (`ProductoId`, `Nombre`, `Genero`, `MarcaId`, `CategoriaId`, `createdAt`, `updatedAt`, `isActive`) VALUES
-(1, 'Polera de Hombre Adidas', 'Hombre', 2, 6, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(2, 'Camisa de Hombre Adidas', 'Hombre', 2, 7, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(3, 'Blusa Mujer Under Armour', 'Mujer', 3, 8, '2025-05-29 13:23:53', '2025-05-29 13:25:57', 1),
-(4, 'Vestido de Niñas Puma', 'Niños', 4, 9, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(5, 'Pantalón de Hombre Gap', 'Hombre', 5, 10, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(6, 'Shorts de Mujer Under Armour', 'Mujer', 3, 11, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(7, 'Falda de Niñas Puma', 'Niños', 4, 12, '2025-05-29 13:23:53', '2025-05-29 13:26:01', 1),
-(8, 'Zapato de Niños Puma', 'Niños', 4, 13, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(9, 'Sandalia de Hombre Nike', 'Hombre', 1, 14, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(10, 'Bota de Mujer Adidas', 'Mujer', 2, 15, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(11, 'Gorra Unisex Gap', 'Unisex', 5, 16, '2025-05-29 13:23:53', '2025-05-29 13:26:05', 1),
-(12, 'Bufanda de Niños Adidas', 'Niños', 3, 17, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(14, 'Parka de Mujer Puma', 'Mujer', 4, 19, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(15, 'Chompa Hombre Gap', 'Hombre', 5, 20, '2025-05-29 13:23:53', '2025-05-29 13:26:12', 1),
-(16, 'Polera de Niños Adidas', 'Niños', 2, 6, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(17, 'Camisa de Hombre Puma', 'Hombre', 4, 7, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(18, 'Blusa de Mujer Gap', 'Mujer', 5, 8, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(21, 'Shorts de Hombre Nike', 'Hombre', 1, 11, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(22, 'Falda de Niñas Adidas', 'Niños', 2, 12, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(26, 'Gorra de Mujer Under Armour', 'Mujer', 3, 16, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(27, 'Bufanda Unisex Puma', 'Unisex', 4, 17, '2025-05-29 13:23:53', '2025-05-29 13:26:28', 1),
-(28, 'Cinturón de Niños Gap', 'Niños', 5, 18, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(31, 'Polera Unisex Puma', 'Unisex', 4, 6, '2025-05-29 13:23:53', '2025-05-29 13:26:35', 1),
-(32, 'Camisa de Niños Adidas', 'Niños', 2, 7, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(34, 'Vestido de Mujer Puma', 'Mujer', 4, 9, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(36, 'Shorts de Niños Under Armour', 'Niños', 3, 11, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(37, 'Falda de Mujer Puma', 'Mujer', 4, 12, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(38, 'Zapato de Mujer Gap', 'Mujer', 5, 13, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(41, 'Gorra de Hombre Nike', 'Hombre', 1, 16, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(42, 'Bufanda de Mujer Adidas', 'Mujer', 2, 17, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(46, 'Polera de Mujer Under Armour', 'Mujer', 3, 6, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(47, 'Camisa Unisex Puma', 'Unisex', 4, 7, '2025-05-29 13:23:53', '2025-05-29 13:27:03', 1),
-(48, 'Blusa de Niñas Gap', 'Niños', 5, 8, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(51, 'Shorts Unisex Nike', 'Unisex', 1, 11, '2025-05-29 13:23:53', '2025-05-29 13:28:32', 1),
-(52, 'Falda de Niñas Nike', 'Niños', 1, 12, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(56, 'Gorra de Niños Under Armour', 'Niños', 3, 16, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(57, 'Bufanda de Hombre Puma', 'Hombre', 4, 17, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(58, 'Cinturón de Mujer Gap', 'Mujer', 5, 18, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(61, 'Polera de Hombre Nike', 'Hombre', 1, 6, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(62, 'Camisa de Mujer Adidas', 'Mujer', 2, 7, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(66, 'Shorts de Hombre Under Armour', 'Hombre', 3, 11, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(67, 'Falda Mujer Adidas', 'Mujer', 2, 12, '2025-05-29 13:23:53', '2025-05-29 13:28:10', 1),
-(68, 'Zapato de Niños Gap', 'Niños', 5, 13, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(71, 'Gorra Unisex Nike', 'Unisex', 1, 16, '2025-05-29 13:23:53', '2025-05-29 13:28:05', 1),
-(72, 'Bufanda de Niños Under Armour', 'Niños', 2, 17, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(76, 'Polera de Niños Under Armour', 'Niños', 3, 6, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(77, 'Camisa de Hombre Under Armour', 'Hombre', 3, 7, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1),
-(78, 'Blusa de Mujer Puma', 'Mujer', 4, 8, '2025-05-29 13:23:53', '2025-05-29 13:23:53', 1);
+INSERT INTO `productos` (`ProductoId`, `Nombre`, `Genero`, `MarcaId`, `CategoriaId`, `createdAt`, `isActive`) VALUES
+(1, 'Polera de Hombre Adidas', 'Hombre', 2, 6, '2025-05-29 13:23:53', 1),
+(2, 'Camisa de Hombre Adidas', 'Hombre', 2, 7, '2025-05-29 13:23:53', 1),
+(3, 'Blusa Mujer Under Armour', 'Mujer', 3, 8, '2025-05-29 13:23:53', 1),
+(4, 'Vestido de Niñas Puma', 'Niños', 4, 9, '2025-05-29 13:23:53', 1),
+(5, 'Pantalón de Hombre Gap', 'Hombre', 5, 10, '2025-05-29 13:23:53', 1),
+(6, 'Shorts de Mujer Under Armour', 'Mujer', 3, 11, '2025-05-29 13:23:53', 1),
+(7, 'Falda de Niñas Puma', 'Niños', 4, 12, '2025-05-29 13:23:53', 1),
+(8, 'Zapato de Niños Puma', 'Niños', 4, 13, '2025-05-29 13:23:53', 1),
+(9, 'Sandalia de Hombre Nike', 'Hombre', 1, 14, '2025-05-29 13:23:53', 1),
+(10, 'Bota de Mujer Adidas', 'Mujer', 2, 15, '2025-05-29 13:23:53', 1),
+(11, 'Gorra Unisex Gap', 'Unisex', 5, 16, '2025-05-29 13:23:53', 1),
+(12, 'Bufanda de Niños Adidas', 'Niños', 3, 17, '2025-05-29 13:23:53', 1),
+(14, 'Parka de Mujer Puma', 'Mujer', 4, 19, '2025-05-29 13:23:53', 1),
+(15, 'Chompa Hombre Gap', 'Hombre', 5, 20, '2025-05-29 13:23:53', 1),
+(16, 'Polera de Niños Adidas', 'Niños', 2, 6, '2025-05-29 13:23:53', 1),
+(17, 'Camisa de Hombre Puma', 'Hombre', 4, 7, '2025-05-29 13:23:53', 1),
+(18, 'Blusa de Mujer Gap', 'Mujer', 5, 8, '2025-05-29 13:23:53', 1),
+(21, 'Shorts de Hombre Nike', 'Hombre', 1, 11, '2025-05-29 13:23:53', 1),
+(22, 'Falda de Niñas Adidas', 'Niños', 2, 12, '2025-05-29 13:23:53', 1),
+(26, 'Gorra de Mujer Under Armour', 'Mujer', 3, 16, '2025-05-29 13:23:53', 1),
+(27, 'Bufanda Unisex Puma', 'Unisex', 4, 17, '2025-05-29 13:23:53', 1),
+(28, 'Cinturón de Niños Gap', 'Niños', 5, 18, '2025-05-29 13:23:53', 1),
+(31, 'Polera Unisex Puma', 'Unisex', 4, 6, '2025-05-29 13:23:53', 1),
+(32, 'Camisa de Niños Adidas', 'Niños', 2, 7, '2025-05-29 13:23:53', 1),
+(34, 'Vestido de Mujer Puma', 'Mujer', 4, 9, '2025-05-29 13:23:53', 1),
+(36, 'Shorts de Niños Under Armour', 'Niños', 3, 11, '2025-05-29 13:23:53', 1),
+(37, 'Falda de Mujer Puma', 'Mujer', 4, 12, '2025-05-29 13:23:53', 1),
+(38, 'Zapato de Mujer Gap', 'Mujer', 5, 13, '2025-05-29 13:23:53', 1),
+(41, 'Gorra de Hombre Nike', 'Hombre', 1, 16, '2025-05-29 13:23:53', 1),
+(42, 'Bufanda de Mujer Adidas', 'Mujer', 2, 17, '2025-05-29 13:23:53', 1),
+(46, 'Polera de Mujer Under Armour', 'Mujer', 3, 6, '2025-05-29 13:23:53', 1),
+(47, 'Camisa Unisex Puma', 'Unisex', 4, 7, '2025-05-29 13:23:53', 1),
+(48, 'Blusa de Niñas Gap', 'Niños', 5, 8, '2025-05-29 13:23:53', 1),
+(51, 'Shorts Unisex Nike', 'Unisex', 1, 11, '2025-05-29 13:23:53', 1),
+(52, 'Falda de Niñas Nike', 'Niños', 1, 12, '2025-05-29 13:23:53', 1),
+(56, 'Gorra de Niños Under Armour', 'Niños', 3, 16, '2025-05-29 13:23:53', 1),
+(57, 'Bufanda de Hombre Puma', 'Hombre', 4, 17, '2025-05-29 13:23:53', 1),
+(58, 'Cinturón de Mujer Gap', 'Mujer', 5, 18, '2025-05-29 13:23:53', 1),
+(61, 'Polera de Hombre Nike', 'Hombre', 1, 6, '2025-05-29 13:23:53', 1),
+(62, 'Camisa de Mujer Adidas', 'Mujer', 2, 7, '2025-05-29 13:23:53', 1),
+(66, 'Shorts de Hombre Under Armour', 'Hombre', 3, 11, '2025-05-29 13:23:53', 1),
+(67, 'Falda Mujer Adidas', 'Mujer', 2, 12, '2025-05-29 13:23:53', 1),
+(68, 'Zapato de Niños Gap', 'Niños', 5, 13, '2025-05-29 13:23:53', 1),
+(71, 'Gorra Unisex Nike', 'Unisex', 1, 16, '2025-05-29 13:23:53', 1),
+(72, 'Bufanda de Niños Under Armour', 'Niños', 2, 17, '2025-05-29 13:23:53', 1),
+(76, 'Polera de Niños Under Armour', 'Niños', 3, 6, '2025-05-29 13:23:53', 1),
+(77, 'Camisa de Hombre Under Armour', 'Hombre', 3, 7, '2025-05-29 13:23:53', 1),
+(78, 'Blusa de Mujer Puma', 'Mujer', 4, 8, '2025-05-29 13:23:53', 1);
 
 -- --------------------------------------------------------
 
@@ -234,64 +230,63 @@ CREATE TABLE `productovariantes` (
   `SKU` varchar(50) NOT NULL,
   `PrecioVenta` decimal(10,2) NOT NULL DEFAULT 0.00,
   `Cantidad` int(11) NOT NULL DEFAULT 0,
-  `Activo` tinyint(1) DEFAULT 1,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp()
+  `isActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `productovariantes`
 --
 
-INSERT INTO `productovariantes` (`VarianteId`, `ProductoId`, `Color`, `Talla`, `Material`, `SKU`, `PrecioVenta`, `Cantidad`, `Activo`, `createdAt`, `updatedAt`) VALUES
-(1, 1, 'Morado', 'S', 'Nylon', 'SKU-001', 50.65, 2, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(2, 9, 'Negro', 'M', 'Mezclilla', 'SKU-009', 124.70, 16, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(3, 11, 'Gris', 'S', 'Nylon', 'SKU-011', 72.21, 18, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(4, 21, 'Rosa', 'XL', 'Poliéster', 'SKU-021', 56.35, 16, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(5, 31, 'Rosa', 'XL', 'Mezclilla', 'SKU-031', 117.12, 8, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(6, 41, 'Marrón', 'M', 'Nylon', 'SKU-041', 108.01, 18, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(7, 51, 'Rosa', 'XL', 'Lino', 'SKU-051', 109.38, 1, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(8, 61, 'Negro', 'XL', 'Seda', 'SKU-061', 131.42, 19, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(9, 71, 'Verde', 'L', 'Algodón', 'SKU-071', 123.51, 8, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(10, 2, 'Rosa', 'S', 'Lana', 'SKU-002', 85.44, 5, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(11, 10, 'Morado', 'S', 'Nylon', 'SKU-010', 58.26, 8, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(12, 12, 'Rosa', 'M', 'Algodón', 'SKU-012', 128.30, 13, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(13, 22, 'Marrón', 'L', 'Seda', 'SKU-022', 139.57, 5, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(14, 32, 'Negro', 'M', 'Algodón', 'SKU-032', 133.39, 17, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(15, 42, 'Amarillo', 'L', 'Cuero', 'SKU-042', 80.09, 5, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(16, 52, 'Azul', 'S', 'Mezclilla', 'SKU-052', 70.98, 9, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(17, 62, 'Blanco', 'S', 'Poliéster', 'SKU-062', 84.56, 7, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(18, 72, 'Amarillo', 'XXL', 'Seda', 'SKU-072', 132.80, 16, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(19, 3, 'Verde', 'M', 'Poliéster', 'SKU-003', 78.63, 18, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(20, 6, 'Amarillo', 'XXL', 'Mezclilla', 'SKU-006', 53.26, 7, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(21, 16, 'Rosa', 'S', 'Lana', 'SKU-016', 103.52, 1, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(22, 26, 'Negro', 'XXL', 'Nylon', 'SKU-026', 102.02, 11, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(23, 36, 'Azul', 'XXL', 'Seda', 'SKU-036', 78.78, 4, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(24, 46, 'Marrón', 'S', 'Seda', 'SKU-046', 53.68, 19, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(25, 56, 'Amarillo', 'XL', 'Lino', 'SKU-056', 78.28, 10, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(26, 66, 'Blanco', 'XXL', 'Poliéster', 'SKU-066', 77.11, 15, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(27, 76, 'Marrón', 'M', 'Lana', 'SKU-076', 63.47, 19, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(28, 4, 'Verde', 'L', 'Algodón', 'SKU-004', 126.96, 11, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(29, 7, 'Negro', 'S', 'Algodón', 'SKU-007', 91.45, 17, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(30, 14, 'Marrón', 'XL', 'Nylon', 'SKU-014', 86.34, 18, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(31, 17, 'Negro', 'M', 'Algodón', 'SKU-017', 86.34, 16, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(32, 27, 'Marrón', 'XL', 'Poliéster', 'SKU-027', 121.87, 2, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(33, 34, 'Azul', 'L', 'Lino', 'SKU-034', 131.06, 4, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(34, 37, 'Blanco', 'XXL', 'Poliéster', 'SKU-037', 55.47, 16, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(35, 47, 'Rosa', 'XXL', 'Nylon', 'SKU-047', 121.69, 10, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(36, 57, 'Verde', 'S', 'Poliéster', 'SKU-057', 58.05, 15, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(37, 67, 'Verde', 'M', 'Mezclilla', 'SKU-067', 102.09, 17, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(38, 77, 'Rosa', 'XL', 'Lino', 'SKU-077', 124.42, 15, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(39, 5, 'Negro', 'L', 'Lino', 'SKU-005', 64.98, 18, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(40, 8, 'Marrón', 'L', 'Mezclilla', 'SKU-008', 67.38, 3, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(41, 15, 'Azul', 'M', 'Nylon', 'SKU-015', 147.82, 15, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(42, 18, 'Rosa', 'XXL', 'Algodón', 'SKU-018', 108.70, 12, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(43, 28, 'Azul', 'S', 'Nylon', 'SKU-028', 65.16, 17, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(44, 38, 'Rosa', 'XXL', 'Cuero', 'SKU-038', 51.24, 15, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(45, 48, 'Blanco', 'M', 'Algodón', 'SKU-048', 97.89, 4, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(46, 58, 'Negro', 'M', 'Poliéster', 'SKU-058', 83.55, 1, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(47, 68, 'Azul', 'L', 'Seda', 'SKU-068', 103.82, 7, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59'),
-(48, 78, 'Azul', 'L', 'Seda', 'SKU-078', 85.38, 12, 1, '2025-06-04 06:58:59', '2025-06-04 06:58:59');
+INSERT INTO `productovariantes` (`VarianteId`, `ProductoId`, `Color`, `Talla`, `Material`, `SKU`, `PrecioVenta`, `Cantidad`, `createdAt`, `isActive`) VALUES
+(1, 1, 'Morado', 'S', 'Nylon', 'SKU-001', 50.65, 2, '2025-06-04 06:58:59', 127),
+(2, 9, 'Negro', 'M', 'Mezclilla', 'SKU-009', 124.70, 16, '2025-06-04 06:58:59', 127),
+(3, 11, 'Gris', 'S', 'Nylon', 'SKU-011', 72.21, 18, '2025-06-04 06:58:59', 127),
+(4, 21, 'Rosa', 'XL', 'Poliéster', 'SKU-021', 56.35, 16, '2025-06-04 06:58:59', 127),
+(5, 31, 'Rosa', 'XL', 'Mezclilla', 'SKU-031', 117.12, 8, '2025-06-04 06:58:59', 127),
+(6, 41, 'Marrón', 'M', 'Nylon', 'SKU-041', 108.01, 18, '2025-06-04 06:58:59', 127),
+(7, 51, 'Rosa', 'XL', 'Lino', 'SKU-051', 109.38, 1, '2025-06-04 06:58:59', 127),
+(8, 61, 'Negro', 'XL', 'Seda', 'SKU-061', 131.42, 19, '2025-06-04 06:58:59', 127),
+(9, 71, 'Verde', 'L', 'Algodón', 'SKU-071', 123.51, 8, '2025-06-04 06:58:59', 127),
+(10, 2, 'Rosa', 'S', 'Lana', 'SKU-002', 85.44, 5, '2025-06-04 06:58:59', 127),
+(11, 10, 'Morado', 'S', 'Nylon', 'SKU-010', 58.26, 8, '2025-06-04 06:58:59', 127),
+(12, 12, 'Rosa', 'M', 'Algodón', 'SKU-012', 128.30, 13, '2025-06-04 06:58:59', 127),
+(13, 22, 'Marrón', 'L', 'Seda', 'SKU-022', 139.57, 5, '2025-06-04 06:58:59', 127),
+(14, 32, 'Negro', 'M', 'Algodón', 'SKU-032', 133.39, 17, '2025-06-04 06:58:59', 127),
+(15, 42, 'Amarillo', 'L', 'Cuero', 'SKU-042', 80.09, 5, '2025-06-04 06:58:59', 127),
+(16, 52, 'Azul', 'S', 'Mezclilla', 'SKU-052', 70.98, 9, '2025-06-04 06:58:59', 127),
+(17, 62, 'Blanco', 'S', 'Poliéster', 'SKU-062', 84.56, 7, '2025-06-04 06:58:59', 127),
+(18, 72, 'Amarillo', 'XXL', 'Seda', 'SKU-072', 132.80, 16, '2025-06-04 06:58:59', 127),
+(19, 3, 'Verde', 'M', 'Poliéster', 'SKU-003', 78.63, 18, '2025-06-04 06:58:59', 127),
+(20, 6, 'Amarillo', 'XXL', 'Mezclilla', 'SKU-006', 53.26, 7, '2025-06-04 06:58:59', 127),
+(21, 16, 'Rosa', 'S', 'Lana', 'SKU-016', 103.52, 1, '2025-06-04 06:58:59', 127),
+(22, 26, 'Negro', 'XXL', 'Nylon', 'SKU-026', 102.02, 11, '2025-06-04 06:58:59', 127),
+(23, 36, 'Azul', 'XXL', 'Seda', 'SKU-036', 78.78, 4, '2025-06-04 06:58:59', 127),
+(24, 46, 'Marrón', 'S', 'Seda', 'SKU-046', 53.68, 19, '2025-06-04 06:58:59', 127),
+(25, 56, 'Amarillo', 'XL', 'Lino', 'SKU-056', 78.28, 10, '2025-06-04 06:58:59', 127),
+(26, 66, 'Blanco', 'XXL', 'Poliéster', 'SKU-066', 77.11, 15, '2025-06-04 06:58:59', 127),
+(27, 76, 'Marrón', 'M', 'Lana', 'SKU-076', 63.47, 19, '2025-06-04 06:58:59', 127),
+(28, 4, 'Verde', 'L', 'Algodón', 'SKU-004', 126.96, 11, '2025-06-04 06:58:59', 127),
+(29, 7, 'Negro', 'S', 'Algodón', 'SKU-007', 91.45, 17, '2025-06-04 06:58:59', 127),
+(30, 14, 'Marrón', 'XL', 'Nylon', 'SKU-014', 86.34, 18, '2025-06-04 06:58:59', 127),
+(31, 17, 'Negro', 'M', 'Algodón', 'SKU-017', 86.34, 16, '2025-06-04 06:58:59', 127),
+(32, 27, 'Marrón', 'XL', 'Poliéster', 'SKU-027', 121.87, 2, '2025-06-04 06:58:59', 127),
+(33, 34, 'Azul', 'L', 'Lino', 'SKU-034', 131.06, 4, '2025-06-04 06:58:59', 127),
+(34, 37, 'Blanco', 'XXL', 'Poliéster', 'SKU-037', 55.47, 16, '2025-06-04 06:58:59', 127),
+(35, 47, 'Rosa', 'XXL', 'Nylon', 'SKU-047', 121.69, 10, '2025-06-04 06:58:59', 127),
+(36, 57, 'Verde', 'S', 'Poliéster', 'SKU-057', 58.05, 15, '2025-06-04 06:58:59', 127),
+(37, 67, 'Verde', 'M', 'Mezclilla', 'SKU-067', 102.09, 17, '2025-06-04 06:58:59', 127),
+(38, 77, 'Rosa', 'XL', 'Lino', 'SKU-077', 124.42, 15, '2025-06-04 06:58:59', 127),
+(39, 5, 'Negro', 'L', 'Lino', 'SKU-005', 64.98, 18, '2025-06-04 06:58:59', 127),
+(40, 8, 'Marrón', 'L', 'Mezclilla', 'SKU-008', 67.38, 3, '2025-06-04 06:58:59', 127),
+(41, 15, 'Azul', 'M', 'Nylon', 'SKU-015', 147.82, 15, '2025-06-04 06:58:59', 127),
+(42, 18, 'Rosa', 'XXL', 'Algodón', 'SKU-018', 108.70, 12, '2025-06-04 06:58:59', 127),
+(43, 28, 'Azul', 'S', 'Nylon', 'SKU-028', 65.16, 17, '2025-06-04 06:58:59', 127),
+(44, 38, 'Rosa', 'XXL', 'Cuero', 'SKU-038', 51.24, 15, '2025-06-04 06:58:59', 127),
+(45, 48, 'Blanco', 'M', 'Algodón', 'SKU-048', 97.89, 4, '2025-06-04 06:58:59', 127),
+(46, 58, 'Negro', 'M', 'Poliéster', 'SKU-058', 83.55, 1, '2025-06-04 06:58:59', 127),
+(47, 68, 'Azul', 'L', 'Seda', 'SKU-068', 103.82, 7, '2025-06-04 06:58:59', 127),
+(48, 78, 'Azul', 'L', 'Seda', 'SKU-078', 85.38, 12, '2025-06-04 06:58:59', 127);
 
 -- --------------------------------------------------------
 
@@ -305,44 +300,43 @@ CREATE TABLE `promociones` (
   `DescuentoPct` decimal(5,2) NOT NULL,
   `FechaInicio` date NOT NULL,
   `FechaFin` date NOT NULL,
-  `Activa` tinyint(1) DEFAULT 1,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp()
+  `isActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `promociones`
 --
 
-INSERT INTO `promociones` (`PromocionId`, `Titulo`, `DescuentoPct`, `FechaInicio`, `FechaFin`, `Activa`, `createdAt`, `updatedAt`) VALUES
-(1, 'Verano Camisas -20%', 20.00, '2025-06-01', '2025-06-30', 1, '2025-06-04 07:22:01', '2025-06-04 07:22:01'),
-(2, 'Rebaja Jeans -15%', 15.00, '2025-06-10', '2025-06-20', 1, '2025-06-04 07:22:01', '2025-06-04 07:22:01'),
-(3, 'Oferta Chaquetas 10%', 10.00, '2025-06-05', '2025-06-25', 1, '2025-06-04 07:22:01', '2025-06-04 07:22:01'),
-(4, 'Descuento Nike -10%', 10.00, '2025-06-01', '2025-06-10', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(5, 'Oferta Adidas -25%', 25.00, '2025-06-05', '2025-06-15', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(6, 'Promo Under Armour -30%', 30.00, '2025-06-10', '2025-06-20', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(7, 'Liquidación Puma -20%', 20.00, '2025-06-12', '2025-06-22', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(8, 'Rebaja Gap -15%', 15.00, '2025-06-15', '2025-06-25', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(9, 'Descuento Nike Verano -5%', 5.00, '2025-06-20', '2025-06-30', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(10, 'Oferta Adidas Camisetas -10%', 10.00, '2025-06-22', '2025-07-02', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(11, 'Promo Under Armour Shorts -20%', 20.00, '2025-06-25', '2025-07-05', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(12, 'Liquidación Puma Faldas -25%', 25.00, '2025-06-28', '2025-07-08', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(13, 'Rebaja Gap Zapatos -30%', 30.00, '2025-07-01', '2025-07-11', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(14, 'Descuento Nike Gorros -15%', 15.00, '2025-07-05', '2025-07-15', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(15, 'Oferta Adidas Bufandas -20%', 20.00, '2025-07-08', '2025-07-18', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(16, 'Promo Under Armour Poleras -10%', 10.00, '2025-07-10', '2025-07-20', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(17, 'Liquidación Puma Camisas -15%', 15.00, '2025-07-12', '2025-07-22', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(18, 'Rebaja Gap Chaquetas -20%', 20.00, '2025-07-15', '2025-07-25', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(19, 'Descuento Nike Pantalones -25%', 25.00, '2025-07-18', '2025-07-28', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(20, 'Oferta Adidas Shorts -30%', 30.00, '2025-07-20', '2025-07-30', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(21, 'Promo Under Armour Faldas -10%', 10.00, '2025-07-22', '2025-08-01', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(22, 'Liquidación Puma Zapatos -15%', 15.00, '2025-07-25', '2025-08-04', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(23, 'Rebaja Gap Botas -20%', 20.00, '2025-07-28', '2025-08-07', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(24, 'Descuento Nike Gorra Unisex -10%', 10.00, '2025-08-01', '2025-08-11', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(25, 'Oferta Adidas Bufanda Niños -15%', 15.00, '2025-08-03', '2025-08-13', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(26, 'Promo Under Armour Polera Niños -20%', 20.00, '2025-08-05', '2025-08-15', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(27, 'Liquidación Puma Camisa Hombre -25%', 25.00, '2025-08-07', '2025-08-17', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42'),
-(28, 'Rebaja Gap Zapato Mujer -30%', 30.00, '2025-08-10', '2025-08-20', 1, '2025-06-04 07:11:42', '2025-06-04 07:11:42');
+INSERT INTO `promociones` (`PromocionId`, `Titulo`, `DescuentoPct`, `FechaInicio`, `FechaFin`, `createdAt`, `isActive`) VALUES
+(1, 'Verano Camisas -20%', 20.00, '2025-06-01', '2025-06-30', '2025-06-04 07:22:01', 127),
+(2, 'Rebaja Jeans -15%', 15.00, '2025-06-10', '2025-06-20', '2025-06-04 07:22:01', 127),
+(3, 'Oferta Chaquetas 10%', 10.00, '2025-06-05', '2025-06-25', '2025-06-04 07:22:01', 127),
+(4, 'Descuento Nike -10%', 10.00, '2025-06-01', '2025-06-10', '2025-06-04 07:11:42', 127),
+(5, 'Oferta Adidas -25%', 25.00, '2025-06-05', '2025-06-15', '2025-06-04 07:11:42', 127),
+(6, 'Promo Under Armour -30%', 30.00, '2025-06-10', '2025-06-20', '2025-06-04 07:11:42', 127),
+(7, 'Liquidación Puma -20%', 20.00, '2025-06-12', '2025-06-22', '2025-06-04 07:11:42', 127),
+(8, 'Rebaja Gap -15%', 15.00, '2025-06-15', '2025-06-25', '2025-06-04 07:11:42', 127),
+(9, 'Descuento Nike Verano -5%', 5.00, '2025-06-20', '2025-06-30', '2025-06-04 07:11:42', 127),
+(10, 'Oferta Adidas Camisetas -10%', 10.00, '2025-06-22', '2025-07-02', '2025-06-04 07:11:42', 127),
+(11, 'Promo Under Armour Shorts -20%', 20.00, '2025-06-25', '2025-07-05', '2025-06-04 07:11:42', 127),
+(12, 'Liquidación Puma Faldas -25%', 25.00, '2025-06-28', '2025-07-08', '2025-06-04 07:11:42', 127),
+(13, 'Rebaja Gap Zapatos -30%', 30.00, '2025-07-01', '2025-07-11', '2025-06-04 07:11:42', 127),
+(14, 'Descuento Nike Gorros -15%', 15.00, '2025-07-05', '2025-07-15', '2025-06-04 07:11:42', 127),
+(15, 'Oferta Adidas Bufandas -20%', 20.00, '2025-07-08', '2025-07-18', '2025-06-04 07:11:42', 127),
+(16, 'Promo Under Armour Poleras -10%', 10.00, '2025-07-10', '2025-07-20', '2025-06-04 07:11:42', 127),
+(17, 'Liquidación Puma Camisas -15%', 15.00, '2025-07-12', '2025-07-22', '2025-06-04 07:11:42', 127),
+(18, 'Rebaja Gap Chaquetas -20%', 20.00, '2025-07-15', '2025-07-25', '2025-06-04 07:11:42', 127),
+(19, 'Descuento Nike Pantalones -25%', 25.00, '2025-07-18', '2025-07-28', '2025-06-04 07:11:42', 127),
+(20, 'Oferta Adidas Shorts -30%', 30.00, '2025-07-20', '2025-07-30', '2025-06-04 07:11:42', 127),
+(21, 'Promo Under Armour Faldas -10%', 10.00, '2025-07-22', '2025-08-01', '2025-06-04 07:11:42', 127),
+(22, 'Liquidación Puma Zapatos -15%', 15.00, '2025-07-25', '2025-08-04', '2025-06-04 07:11:42', 127),
+(23, 'Rebaja Gap Botas -20%', 20.00, '2025-07-28', '2025-08-07', '2025-06-04 07:11:42', 127),
+(24, 'Descuento Nike Gorra Unisex -10%', 10.00, '2025-08-01', '2025-08-11', '2025-06-04 07:11:42', 127),
+(25, 'Oferta Adidas Bufanda Niños -15%', 15.00, '2025-08-03', '2025-08-13', '2025-06-04 07:11:42', 127),
+(26, 'Promo Under Armour Polera Niños -20%', 20.00, '2025-08-05', '2025-08-15', '2025-06-04 07:11:42', 127),
+(27, 'Liquidación Puma Camisa Hombre -25%', 25.00, '2025-08-07', '2025-08-17', '2025-06-04 07:11:42', 127),
+(28, 'Rebaja Gap Zapato Mujer -30%', 30.00, '2025-08-10', '2025-08-20', '2025-06-04 07:11:42', 127);
 
 -- --------------------------------------------------------
 
@@ -353,62 +347,64 @@ INSERT INTO `promociones` (`PromocionId`, `Titulo`, `DescuentoPct`, `FechaInicio
 CREATE TABLE `promocion_variantes` (
   `PromocionVarianteId` int(11) NOT NULL,
   `PromocionId` int(11) NOT NULL,
-  `VarianteId` int(11) NOT NULL
+  `VarianteId` int(11) NOT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `isActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `promocion_variantes`
 --
 
-INSERT INTO `promocion_variantes` (`PromocionVarianteId`, `PromocionId`, `VarianteId`) VALUES
-(49, 1, 1),
-(50, 1, 2),
-(51, 2, 3),
-(52, 2, 4),
-(53, 3, 5),
-(54, 3, 6),
-(55, 4, 7),
-(56, 4, 8),
-(57, 5, 9),
-(58, 5, 10),
-(59, 6, 11),
-(60, 6, 12),
-(61, 7, 13),
-(62, 7, 14),
-(63, 8, 15),
-(64, 8, 16),
-(65, 9, 17),
-(66, 9, 18),
-(67, 10, 19),
-(68, 10, 20),
-(69, 11, 21),
-(70, 11, 22),
-(71, 12, 23),
-(72, 12, 24),
-(73, 13, 25),
-(74, 13, 26),
-(75, 14, 27),
-(76, 14, 28),
-(77, 15, 29),
-(78, 15, 30),
-(79, 16, 31),
-(80, 16, 32),
-(81, 17, 33),
-(82, 17, 34),
-(83, 18, 35),
-(84, 18, 36),
-(85, 19, 37),
-(86, 19, 38),
-(87, 20, 39),
-(88, 20, 40),
-(89, 21, 41),
-(90, 21, 42),
-(91, 22, 43),
-(92, 22, 44),
-(93, 23, 45),
-(94, 23, 46),
-(95, 24, 47),
-(96, 24, 48);
+INSERT INTO `promocion_variantes` (`PromocionVarianteId`, `PromocionId`, `VarianteId`, `createdAt`, `isActive`) VALUES
+(49, 1, 1, '2025-06-05 01:15:32', 1),
+(50, 1, 2, '2025-06-05 01:15:32', 1),
+(51, 2, 3, '2025-06-05 01:15:32', 1),
+(52, 2, 4, '2025-06-05 01:15:32', 1),
+(53, 3, 5, '2025-06-05 01:15:32', 1),
+(54, 3, 6, '2025-06-05 01:15:32', 1),
+(55, 4, 7, '2025-06-05 01:15:32', 1),
+(56, 4, 8, '2025-06-05 01:15:32', 1),
+(57, 5, 9, '2025-06-05 01:15:32', 1),
+(58, 5, 10, '2025-06-05 01:15:32', 1),
+(59, 6, 11, '2025-06-05 01:15:32', 1),
+(60, 6, 12, '2025-06-05 01:15:32', 1),
+(61, 7, 13, '2025-06-05 01:15:32', 1),
+(62, 7, 14, '2025-06-05 01:15:32', 1),
+(63, 8, 15, '2025-06-05 01:15:32', 1),
+(64, 8, 16, '2025-06-05 01:15:32', 1),
+(65, 9, 17, '2025-06-05 01:15:32', 1),
+(66, 9, 18, '2025-06-05 01:15:32', 1),
+(67, 10, 19, '2025-06-05 01:15:32', 1),
+(68, 10, 20, '2025-06-05 01:15:32', 1),
+(69, 11, 21, '2025-06-05 01:15:32', 1),
+(70, 11, 22, '2025-06-05 01:15:32', 1),
+(71, 12, 23, '2025-06-05 01:15:32', 1),
+(72, 12, 24, '2025-06-05 01:15:32', 1),
+(73, 13, 25, '2025-06-05 01:15:32', 1),
+(74, 13, 26, '2025-06-05 01:15:32', 1),
+(75, 14, 27, '2025-06-05 01:15:32', 1),
+(76, 14, 28, '2025-06-05 01:15:32', 1),
+(77, 15, 29, '2025-06-05 01:15:32', 1),
+(78, 15, 30, '2025-06-05 01:15:32', 1),
+(79, 16, 31, '2025-06-05 01:15:32', 1),
+(80, 16, 32, '2025-06-05 01:15:32', 1),
+(81, 17, 33, '2025-06-05 01:15:32', 1),
+(82, 17, 34, '2025-06-05 01:15:32', 1),
+(83, 18, 35, '2025-06-05 01:15:32', 1),
+(84, 18, 36, '2025-06-05 01:15:32', 1),
+(85, 19, 37, '2025-06-05 01:15:32', 1),
+(86, 19, 38, '2025-06-05 01:15:32', 1),
+(87, 20, 39, '2025-06-05 01:15:32', 1),
+(88, 20, 40, '2025-06-05 01:15:32', 1),
+(89, 21, 41, '2025-06-05 01:15:32', 1),
+(90, 21, 42, '2025-06-05 01:15:32', 1),
+(91, 22, 43, '2025-06-05 01:15:32', 1),
+(92, 22, 44, '2025-06-05 01:15:32', 1),
+(93, 23, 45, '2025-06-05 01:15:32', 1),
+(94, 23, 46, '2025-06-05 01:15:32', 1),
+(95, 24, 47, '2025-06-05 01:15:32', 1),
+(96, 24, 48, '2025-06-05 01:15:32', 1);
 
 -- --------------------------------------------------------
 
@@ -421,9 +417,8 @@ CREATE TABLE `sesiones` (
   `ClienteId` int(11) NOT NULL,
   `IniciadoEn` datetime DEFAULT current_timestamp(),
   `FinalizadoEn` datetime DEFAULT NULL,
-  `IsActive` tinyint(1) DEFAULT 1,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp()
+  `IsActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -558,7 +553,7 @@ ALTER TABLE `productos`
 -- AUTO_INCREMENT de la tabla `productovariantes`
 --
 ALTER TABLE `productovariantes`
-  MODIFY `VarianteId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
+  MODIFY `VarianteId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT de la tabla `promociones`
