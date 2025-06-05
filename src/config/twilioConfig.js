@@ -1,3 +1,5 @@
+// src/config/twilioConfig.js
+
 /**
  * Parámetros de Twilio para validación y generación de respuestas.
  * authToken: token secreto de Twilio.

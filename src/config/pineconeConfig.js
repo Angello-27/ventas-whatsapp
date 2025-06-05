@@ -1,3 +1,5 @@
+// src/config/pineconeConfig.js
+
 /**
  * apiKey:         Tu clave secreta de Pinecone, definida en PINECONE_API_KEY.
  * environment:    El entorno en el que está desplegado Pinecone (por ejemplo "us-west1-gcp"),

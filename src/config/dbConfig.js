@@ -1,3 +1,5 @@
+// src/config/dbConfig.js
+
 /**
  * Parámetros de conexión a la base de datos MySQL.
  * Se usan variables de entorno definidas en .env

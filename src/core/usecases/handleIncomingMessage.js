@@ -1,169 +1,48 @@
 // src/core/usecases/handleIncomingMessage.js
 
+const { buildSystemChatPrompt, buildUserChatPrompt } = require('../../infrastructure/openai/prompts/baseChatPrompt');
+const { searchProducts } = require('./helpers/productSearch');
+
 /**
- * Caso de uso: procesa un mensaje entrante de WhatsApp
- * - Guarda cliente / sesión / mensaje
- * - Extrae keywords
- * - Carga vistas (promos, ítems, envase, producto, stock/precio)
- * - Construye prompt con historial, promociones y stock
- * - Llama a OpenAI y devuelve respuesta
+ * Caso de uso: procesa un mensaje entrante de WhatsApp.
+ *
+ * @param {{ from: string, body: string }} data
+ * @param {object} repos      – Debe contener al menos: repos.pineProductoRepo
+ * @param {OpenAIClient} chatClient – Instancia de OpenAIClient (modelo chat)
+ *
+ * @returns {Promise<string>} – el texto que responderá Twilio al usuario.
  */
 async function handleIncomingMessage(
   { from, body },
-  {
-    clienteRepo,
-    sesionChatRepo,
-    mensajeRepo,
-    campanaAmbitoRepo,
-    campanaItemsRepo,
-    envaseInfoRepo,
-    productoHierarchyRepo,
-    stockPrecioRepo,
-    chatFullRepo
-  },
-  openaiClient
+  repos,
+  chatClient
 ) {
-  // 1) CLIENTE
-  let cliente = await clienteRepo.findByTelefono(from);
-  if (!cliente) {
-    cliente = await clienteRepo.create({
-      nombre: null,
-      sexo: null,
-      telefono: from,
-      email: null,
-      direccion: null,
-      tipoCliente: 'Nuevo'
-    });
-  }
-
-  // 2) SESIÓN
-  let sesion = await sesionChatRepo.findActiveByClienteId(cliente.id);
-  if (!sesion) {
-    sesion = await sesionChatRepo.create({ clienteId: cliente.id });
-    openaiClient.resetHistory();
-  } else {
-    // Recuperar todos los mensajes de esta sesión (entrantes y salientes)
-    const historyRows = await chatFullRepo.findBySesionId(sesion.id);
-    historyRows.forEach(msg => {
-      openaiClient.chatHistory.push({
-        role: msg.direccion === 'Entrante' ? 'user' : 'assistant',
-        content: msg.contenido
-      });
-    });
-  }
-
-  // 3) GUARDAR MENSAJE ENTRANTE
-  await mensajeRepo.save({
-    sesionId: sesion.id,
-    direccion: 'Entrante',
-    contenido: body
-  });
-
-  // 4) EXTRAER PALABRAS CLAVE
+  // 1) Extraer keywords (puedes usarlo si lo necesitas más adelante)
   const keywords = body.match(/\w+/g) || [];
 
-  // 5) PROMOCIONES ACTIVAS + DETALLE DE ÍTEMS
-  const promos = await campanaAmbitoRepo.findActive();  // [{ campanaId, campanaNombre, tipo, … }]
-  const promoDetails = await Promise.all(
-    promos.map(async p => {
-      const items = await campanaItemsRepo.findByCampanaId(p.campanaId);
-      // items: [{ itemId, campanaId, envaseId, sku, envaseDescripcion, cantidad }]
-      const detailedItems = await Promise.all(
-        items.map(async item => {
-          // Si no hay envase, saltamos
-          const envase = await envaseInfoRepo.findByEnvaseId(item.envaseId);
-          if (!envase) return null;
+  // 2) Hacer búsqueda semántica de productos
+  //    (el utilitario searchProducts devolverá un string ya formateado)
+  const productListText = await searchProducts(body, repos, 3);
 
-          // Si no hay producto, devolvemos con valores por defecto
-          const hierarchy = envase.productoId
-            ? await productoHierarchyRepo.findByProductoId(envase.productoId)
-            : null;
+  // 3) Definimos un texto estático de sugerencia/promoción (por ahora fijo)
+  const promoText = 'Si deseas comprar, indícame el ID del producto y la cantidad.';
 
-          return {
-            sku: item.sku,
-            cantidad: item.cantidad,
-            producto: envase.productoNombre || 'Desconocido',
-            marca: hierarchy?.marcaNombre || 'Desconocida',
-            categoria: hierarchy?.categoriaNombre || 'Desconocida'
-          };
-        })
-      );
-      // Filtramos posibles nulls
-      return {
-        promo: p,
-        items: detailedItems.filter(i => i !== null)
-      };
-    })
-  );
-
-  // 6) STOCK Y PRECIOS RELEVANTES
-  const stockInfo = await stockPrecioRepo.findByKeywords(keywords);
-  const enrichedStock = await Promise.all(
-    stockInfo.map(async s => {
-      const envase = await envaseInfoRepo.findByEnvaseId(s.envaseId);
-      if (!envase) return null;
-      const hierarchy = envase.productoId
-        ? await productoHierarchyRepo.findByProductoId(envase.productoId)
-        : null;
-
-      return {
-        sku: s.sku,
-        almacen: s.almacenNombre,
-        cantidad: s.cantidad,
-        precio: s.monto,
-        producto: envase.productoNombre || 'Desconocido',
-        marca: hierarchy?.marcaNombre || 'Desconocida'
-      };
-    })
-  );
-  // Filtramos nulls
-  const stockList = enrichedStock.filter(s => s !== null);
-
-  // 7) CONSTRUIR PROMPT PARA IA
-  const systemPrompt = `
-Eres un asistente de ventas de ropa.
-Usa la información de promociones y stock/precio para recomendar productos específicos,
-indicando marca y categoría.
-`.trim();
-
-  const promoText = promoDetails.length
-    ? promoDetails.map(pd =>
-      `• ${pd.promo.campanaNombre} (${pd.promo.tipo}):\n  ` +
-      pd.items.map(i =>
-        `- ${i.producto} (${i.sku}), marca ${i.marca}, categoría ${i.categoria}, qty ${i.cantidad}`
-      ).join('\n  ')
-    ).join('\n')
-    : 'No hay promociones activas.';
-
-  const stockText = stockList.length
-    ? stockList.map(s =>
-      `• ${s.producto} (${s.sku}) en ${s.almacen}: ` +
-      `${s.cantidad} uds a Bs. ${s.precio} (marca ${s.marca})`
-    ).join('\n')
-    : 'No se encontró stock relevante.';
-
-  const userPrompt = `
-Cliente dijo: "${body}"
-
-Historial + contexto ya enviado automáticamente por openaiClient
-
-Promociones y sus ítems:
-${promoText}
-
-Stock y precios:
-${stockText}
-`.trim();
-
-  // 8) LLAMAR A IA
-  const reply = await openaiClient.chat({ systemPrompt, userMessage: userPrompt });
-
-  // 9) GUARDAR MENSAJE SALIENTE
-  await mensajeRepo.save({
-    sesionId: sesion.id,
-    direccion: 'Saliente',
-    contenido: reply
+  // 4) Construir los prompts
+  const systemPrompt = buildSystemChatPrompt();
+  const userPrompt = buildUserChatPrompt({
+    from,
+    body,
+    productListText,
+    promoText
   });
 
+  // 5) Llamar a OpenAI para generar la respuesta
+  const reply = await chatClient.chat({
+    systemPrompt,
+    userMessage: userPrompt
+  });
+
+  // 6) Devolver el texto que Twilio le enviará al cliente
   return reply;
 }
 

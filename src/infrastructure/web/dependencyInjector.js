@@ -9,6 +9,8 @@
 // 1) Importar PineconeClient para inicializar el índice
 const pinecone = require('../vector/PineconeClient');
 
+const { apiKey, chatModel, embedModel } = require('../../config/openaiConfig');
+
 const OpenAIClient = require('../openai/OpenAIClient');
 
 // — MySQL Repositorios —
@@ -19,21 +21,31 @@ const PineconeProductoRepository = require('../vector/PineconeProductoRepository
 // …otros repositorios MySQL y Pinecone…
 
 
-function buildDeps(openaiConfig) {
-    // 1) Creamos UNA sola instancia del cliente de OpenAI
-    const openaiClient = new OpenAIClient(openaiConfig);
+function buildDeps() {
+    // 1) Creamos UNA sola instancia de OpenAIClient para chat:
+    const chatClient = new OpenAIClient({
+        apiKey: apiKey,
+        model: chatModel
+    });
 
-    // 2) Ya tenemos UNA sola instancia de Pinecone (por el require('../vector/PineconeClient'))
+    // 2) Creamos UNA sola instancia de OpenAIClient para embeddings:
+    const embedClient = new OpenAIClient({
+        apiKey: apiKey,
+        model: embedModel
+    });
 
-    // 3) Instanciamos repositorios MySQL
+    // 3) Ya tenemos UNA sola instancia de Pinecone (por el require('../vector/PineconeClient'))
+
+    // 4) Instanciamos repositorios MySQL
     const mysqlRepos = {
         productoRepo: new MysqlProductoRepository()
+        // … aquí puedes agregar clienteRepo, sesionChatRepo, mensajeRepo, etc.
     };
 
-    // 4) Instanciamos repositorios Pinecone, inyectando las instancias de pinecone y openaiClient:
+    // 5) Instanciamos repositorios Pinecone, pasándoles embedClient:
     const pineconeRepos = {
-        pineProductoRepo: new PineconeProductoRepository(pinecone, openaiClient)
-        // Si tuvieras PineconeImagenRepository, pasas los mismos argumentos ahí:
+        pineProductoRepo: new PineconeProductoRepository(pinecone, embedClient)
+        // … aquí agregarías pineVarianteRepo, pinePromocionRepo, etc., todos con (pinecone, embedClient)
     };
 
     return {
@@ -41,7 +53,8 @@ function buildDeps(openaiConfig) {
             ...mysqlRepos,
             ...pineconeRepos
         },
-        openaiClient
+        chatClient,   // para manejar conversaciones
+        embedClient   // para generar embeddings
     };
 }
 

@@ -9,18 +9,16 @@ const handleIncomingMessage = require('../../core/usecases/handleIncomingMessage
  */
 module.exports = (repos, openaiClient) => async (req, res) => {
   // Twilio envía el campo From como "whatsapp:+5917xxxxxxx"
-  const rawFrom = req.body.From || '';
-  // Eliminamos el prefijo "whatsapp:" (si existe)
-  const from = rawFrom.startsWith('whatsapp:')
-    ? rawFrom.split(':')[1]
-    : rawFrom;
-
+  const from = req.body.From || '';
   const body = req.body.Body;
 
+  // Opcional: extraer solo el número sin el prefijo “whatsapp:”
+  const plainNumber = from.replace(/^whatsapp:/, '');
+
   try {
-    // Ahora `from` contendrá solamente "+59175505343"
+    // Invocamos tu caso de uso, pasándole solo “repos” y el “openaiClient” (chatClient)
     const reply = await handleIncomingMessage(
-      { from, body },
+      { from: plainNumber, body },
       repos,
       openaiClient
     );

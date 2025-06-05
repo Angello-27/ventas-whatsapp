@@ -9,23 +9,24 @@ const TwilioController = require('../twilio/TwilioController');
 const { buildDeps } = require('./dependencyInjector');
 
 class ExpressServer {
-  constructor(twilioConfig, openaiConfig) {
+  constructor(twilioConfig) {
     this.app = express();
     this.port = process.env.PORT || 3000;
     this.twilioConfig = twilioConfig;
 
-    // Construimos e inyectamos repositorios + cliente OpenAI
-    const { repos, openaiClient } = buildDeps(openaiConfig);
+    // 1) Construimos e inyectamos repos + chatClient + embedClient
+    const { repos, chatClient } = buildDeps();
     this.repos = repos;
-    this.openaiClient = openaiClient;
+    this.openaiClient = chatClient;
 
     // Middlewares
     this.app.use(bodyParser.urlencoded({ extended: false }));
 
-    // Ruta /webhook
+    // 2) Definimos la ruta /webhook con validador + controlador
     this.app.post(
       '/webhook',
       TwilioValidator(this.twilioConfig),
+      // Aquí le pasamos “repos” y “chatClient” a TwilioController:
       TwilioController(this.repos, this.openaiClient)
     );
   }
