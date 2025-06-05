@@ -99,12 +99,16 @@ class PineconeProductoRepository {
         const index = client.Index(pineconeConfig.indexName);
 
         // 3) Ejecutar query
-        const queryResponse = await index.query({
-            topK,
-            vector: queryVector,
-            includeMetadata: true,
-            namespace: 'productos'
-        });
+        const queryResponse = await index.query(
+            {
+                topK: 3,
+                vector: queryVector,
+                includeMetadata: true
+            },
+            {
+                namespace: 'productos'
+            }
+        );
 
         // 4) Mapear los resultados
         return queryResponse.matches.map(match => ({
