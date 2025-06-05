@@ -11,7 +11,7 @@ async function initPinecone() {
         environment: pineconeConfig.environment
     });
 
-    // Si el índice no existe, créalo. De lo contrario, ignora.
+    // Si el índice no existe, créalo.
     const existingIndexes = await pinecone.listIndexes();
     if (!existingIndexes.includes(pineconeConfig.indexName)) {
         await pinecone.createIndex({

@@ -1,3 +1,5 @@
+// infrastructure/openai/OpenAIClient.js
+
 const OpenAI = require('openai');
 
 class OpenAIClient {
@@ -5,7 +7,7 @@ class OpenAIClient {
     // Instanciamos el cliente con tu clave
     this.client = new OpenAI({ apiKey });
     this.model = model;
-    this.chatHistory = []; // Para llevar el hilo de la conversación
+    this.chatHistory = [];
   }
 
   // Resetea el hilo si quieres empezar de cero
@@ -29,15 +31,25 @@ class OpenAIClient {
       temperature: 0.7
     });
 
-    // La respuesta viene en resp.choices[0].message.content
     const reply = resp.choices[0].message.content.trim();
 
     // Guardamos en el historial
     this.chatHistory.push({ role: 'user', content: userMessage });
     this.chatHistory.push({ role: 'assistant', content: reply });
-
     return reply;
   }
+
+  // Nota: en los repositorios vectoriales usamos `embedText`, 
+  // pero aquí aún no está definido; deberías agregar algo como:
+  // 
+  // async embedText(text) {
+  //   return await this.client.embeddings.create({
+  //     model: this.model,
+  //     input: text
+  //   });
+  // }
+  // 
+  // para que los repositorios puedan hacer .embedText(text).
 }
 
 module.exports = OpenAIClient;

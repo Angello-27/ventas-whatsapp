@@ -1,15 +1,17 @@
 // src/infrastructure/web/dependencyInjector.js
 
 /**
- * Aquí se instancian todas las implementaciones concretas de repositorios
- * (MySQL + Pinecone), y se exportan en un solo objeto `repos`. También se
- * configura el cliente de OpenAI.
+ * Instancia todas las implementaciones concretas de repositorios
+ * (MySQL + Pinecone), y exporta en un solo objeto `repos`. También
+ * crea el cliente de OpenAI y expone esa misma instancia para compartirla.
  */
+
+// 1) Importar PineconeClient para inicializar el índice
+const pinecone = require('../vector/PineconeClient');
 
 const OpenAIClient = require('../openai/OpenAIClient');
 
 // — MySQL Repositorios —
-// Cada uno implementa la interfaz correspondiente en core/repositories
 const MysqlClienteRepository = require('../db/MysqlClienteRepository');
 const MysqlSesionChatRepository = require('../db/MysqlSesionChatRepository');
 const MysqlMensajeRepository = require('../db/MysqlMensajeRepository');
@@ -17,41 +19,50 @@ const MysqlProductoRepository = require('../db/MysqlProductoRepository');
 const MysqlVarianteRepository = require('../db/MysqlVarianteRepository');
 const MysqlPromocionRepository = require('../db/MysqlPromocionRepository');
 const MysqlInteresesRepository = require('../db/MysqlInteresesRepository');
-const MysqlImagenRepository = require('../db/MysqlImagenRepository');  // <– Repositorio de imágenes
+const MysqlImagenRepository = require('../db/MysqlImagenRepository');
 
 // — Pinecone (vectorial) Repositorios —
-// Cada uno implementa la interfaz correspondiente en core/repositories
 const PineconeProductoRepository = require('../vector/PineconeProductoRepository');
 const PineconeVarianteRepository = require('../vector/PineconeVarianteRepository');
 const PineconePromocionRepository = require('../vector/PineconePromocionRepository');
-const PineconeInteresesRepository = require('../vector/PineconeInteresesRepository');
 // (Si en el futuro añades PineconeImagenRepository, agréguelo aquí)
 
+
 function buildDeps(openaiConfig) {
-    // 1) Instanciamos cada repositorio (MySQL)
-    const repos = {
-        // MySQL
-        clienteRepo: new MysqlClienteRepository(),     // implementa IClienteRepository
-        sesionChatRepo: new MysqlSesionChatRepository(),  // implementa ISesionChatRepository
-        mensajeRepo: new MysqlMensajeRepository(),     // implementa IMensajeRepository
-        productoRepo: new MysqlProductoRepository(),    // implementa IProductoRepository
-        varianteRepo: new MysqlVarianteRepository(),    // implementa IVarianteRepository
-        promocionRepo: new MysqlPromocionRepository(),   // implementa IPromocionRepository
-        interesesRepo: new MysqlInteresesRepository(),   // implementa IInteresesRepository
-        imagenRepo: new MysqlImagenRepository(),      // implementa IImagenRepository
-
-        // 2) Instanciamos cada repositorio (Pinecone) para búsquedas vectoriales
-        pineProductoRepo: new PineconeProductoRepository(),   // implementa IProductoRepository (vector)
-        pineVarianteRepo: new PineconeVarianteRepository(),   // implementa IVarianteRepository (vector)
-        pinePromocionRepo: new PineconePromocionRepository(),  // implementa IPromocionRepository (vector)
-        pineInteresesRepo: new PineconeInteresesRepository(),  // implementa IInteresesRepository (vector)
-        // Si llegas a tener PineconeImagenRepository, agrégalo como “pineImagenRepo” aquí
-    };
-
-    // 3) Instanciamos el cliente de OpenAI
+    // 1) Creamos UNA sola instancia del cliente de OpenAI
     const openaiClient = new OpenAIClient(openaiConfig);
 
-    return { repos, openaiClient };
+    // 2) Ya tenemos UNA sola instancia de Pinecone (por el require('../vector/PineconeClient'))
+    //    que se inicializó al cargar este módulo.
+
+    // 3) Instanciamos repositorios MySQL
+    const mysqlRepos = {
+        clienteRepo: new MysqlClienteRepository(),
+        sesionChatRepo: new MysqlSesionChatRepository(),
+        mensajeRepo: new MysqlMensajeRepository(),
+        productoRepo: new MysqlProductoRepository(),
+        varianteRepo: new MysqlVarianteRepository(),
+        promocionRepo: new MysqlPromocionRepository(),
+        interesesRepo: new MysqlInteresesRepository(),
+        imagenRepo: new MysqlImagenRepository()
+    };
+
+    // 4) Instanciamos repositorios Pinecone, inyectando las instancias de pinecone y openaiClient:
+    const pineconeRepos = {
+        pineProductoRepo: new PineconeProductoRepository(pinecone, openaiClient),
+        pineVarianteRepo: new PineconeVarianteRepository(pinecone, openaiClient),
+        pinePromocionRepo: new PineconePromocionRepository(pinecone, openaiClient)
+        // Si tuvieras PineconeImagenRepository, pasas los mismos argumentos ahí:
+        // pineImagenRepo: new PineconeImagenRepository(pinecone, openaiClient)
+    };
+
+    return {
+        repos: {
+            ...mysqlRepos,
+            ...pineconeRepos
+        },
+        openaiClient
+    };
 }
 
 module.exports = { buildDeps };
