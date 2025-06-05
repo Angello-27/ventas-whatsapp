@@ -9,15 +9,19 @@ class PineconeProductoRepository {
      * @param {{ embedText: (text: string) => Promise<any> }} embedClient
      */
     constructor(pineconePromise, embedClient) {
+        this.alreadySynced = false;
         this.pineconePromise = pineconePromise;
         this.embedClient = embedClient;
     }
 
     /**
-   * Devuelve true si la namespace "productos" NO tiene vectores (totalVectorCount === 0).
-   * Si la namespace no existe, también devuelve true para que luego se cree y se sincronicen.
-   */
+     * Devuelve true si la namespace "productos" NO tiene vectores (totalVectorCount === 0).
+     * Si la namespace no existe, también devuelve true para que luego se cree y se sincronicen.
+     */
     async needsSync() {
+        // Si ya sincronizamos en este ciclo de vida, nunca más tocar Pinecone:
+        if (this.alreadySynced) return false;
+
         // 1) Obtenemos la instancia real de Pinecone
         const client = await this.pineconePromise;
         const index = client.Index(pineconeConfig.indexName);
@@ -87,6 +91,9 @@ class PineconeProductoRepository {
         } else {
             console.log('⚠️ No hay vectores para subir (la lista está vacía).');
         }
+
+        // Marcamos como sincronizado para no repetirlo
+        this.alreadySynced = true;
     }
 
     async semanticSearch(queryText, topK = 3) {
@@ -101,7 +108,7 @@ class PineconeProductoRepository {
         // 3) Ejecutar query
         const queryResponse = await index.query(
             {
-                topK: 3,
+                topK: topK,
                 vector: queryVector,
                 includeMetadata: true
             },
