@@ -1,7 +1,12 @@
+// src/infrastructure/web/ExpressServer.js
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const TwilioValidator = require('../twilio/TwilioValidator');
-const TwilioController = require('./TwilioController');
+const TwilioController = require('../twilio/TwilioController');
+
+// En lugar de importar cada repositorio aquí, llamamos a buildDeps:
+const { buildDeps } = require('./dependencyInjector');
 
 class ExpressServer {
   constructor(twilioConfig, openaiConfig) {
@@ -9,42 +14,15 @@ class ExpressServer {
     this.port = process.env.PORT || 3000;
     this.twilioConfig = twilioConfig;
 
-    // Inicializa repositorios con el orden correcto
-    const ClienteRepository = require('../db/ClienteRepository');
-    const SesionChatRepository = require('../db/SesionChatRepository');
-    const MensajeRepository = require('../db/MensajeRepository');
-
-    const VistaCampanaAmbitoRepository = require('../db/VistaCampanaAmbitoRepository');
-    const VistaCampanaItemsRepository = require('../db/VistaCampanaItemsRepository');
-    const VistaEnvaseInfoRepository = require('../db/VistaEnvaseInfoRepository');
-    const VistaItemOrdenFullRepository = require('../db/VistaItemOrdenFullRepository');
-    const VistaProductoHierarchyRepository = require('../db/VistaProductoHierarchyRepository');
-    const VistaStockPrecioRepository = require('../db/VistaStockPrecioRepository');
-    const VistaChatFullRepository = require('../db/VistaChatFullRepository');
-
-    // Cliente OpenAI
-    const OpenAIClient = require('../openai/OpenAIClient');
-
-    this.repos = {
-      clienteRepo: new ClienteRepository(),
-      sesionChatRepo: new SesionChatRepository(),
-      mensajeRepo: new MensajeRepository(),
-
-      chatFullRepo: new VistaChatFullRepository(),
-      campanaAmbitoRepo: new VistaCampanaAmbitoRepository(),
-      campanaItemsRepo: new VistaCampanaItemsRepository(),
-      envaseInfoRepo: new VistaEnvaseInfoRepository(),
-      itemOrdenFullRepo: new VistaItemOrdenFullRepository(),
-      productoHierarchyRepo: new VistaProductoHierarchyRepository(),
-      stockPrecioRepo: new VistaStockPrecioRepository(),
-    };
-
-    this.openaiClient = new OpenAIClient(openaiConfig);
+    // Construimos e inyectamos repositorios + cliente OpenAI
+    const { repos, openaiClient } = buildDeps(openaiConfig);
+    this.repos = repos;
+    this.openaiClient = openaiClient;
 
     // Middlewares
     this.app.use(bodyParser.urlencoded({ extended: false }));
 
-    // Ruta /webhook con validación de firma y controlador
+    // Ruta /webhook
     this.app.post(
       '/webhook',
       TwilioValidator(this.twilioConfig),

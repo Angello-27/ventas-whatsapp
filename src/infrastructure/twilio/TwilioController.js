@@ -1,3 +1,5 @@
+// infrastructure/web/TwilioController.js
+
 const { MessagingResponse } = require('twilio').twiml;
 const handleIncomingMessage = require('../../core/usecases/handleIncomingMessage');
 
@@ -6,11 +8,17 @@ const handleIncomingMessage = require('../../core/usecases/handleIncomingMessage
  * Solo necesita repos y usa handleIncomingMessage
  */
 module.exports = (repos, openaiClient) => async (req, res) => {
-  const from = req.body.From;
+  // Twilio envía el campo From como "whatsapp:+5917xxxxxxx"
+  const rawFrom = req.body.From || '';
+  // Eliminamos el prefijo "whatsapp:" (si existe)
+  const from = rawFrom.startsWith('whatsapp:')
+    ? rawFrom.split(':')[1]
+    : rawFrom;
+
   const body = req.body.Body;
 
   try {
-    // Llamamos al use case pasando también openaiClient
+    // Ahora `from` contendrá solamente "+59175505343"
     const reply = await handleIncomingMessage(
       { from, body },
       repos,
