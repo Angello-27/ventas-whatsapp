@@ -1,31 +1,60 @@
-// infrastructure/vector/PineconeClient.js
+// src/infrastructure/vector/PineconeClient.js
 
-const { PineconeClient } = require('@pinecone-database/pinecone');
+/**
+ * Cliente global de Pinecone v6 (módulo ESM).  
+ *
+ * – Usamos `import(...)` dinámico para cargar la clase `Pinecone` desde 
+ *   "@pinecone-database/pinecone".  
+ * – Luego instanciamos `new Pinecone({ apiKey, environment })`.  
+ * – Finalmente, intentamos crear el índice (sin anidar createRequest).
+ */
+
 const pineconeConfig = require('../../config/pineconeConfig');
 
-const pinecone = new PineconeClient();
+async function createAndInitClient() {
+    // 1) Import dinámico del módulo ESM de Pinecone
+    const pineconeModule = await import('@pinecone-database/pinecone');
 
-async function initPinecone() {
-    await pinecone.init({
-        apiKey: pineconeConfig.apiKey,
-        environment: pineconeConfig.environment
+    // 2) La clase que necesitamos se llama “Pinecone”
+    const Pinecone = pineconeModule.Pinecone;
+    if (typeof Pinecone !== 'function') {
+        throw new Error('No se pudo encontrar la clase `Pinecone` en el paquete @pinecone-database/pinecone.');
+    }
+
+    // 3) Instanciamos pasándole apiKey y environment directamente
+    //    (podrías omitir el campo `environment` si ya lo defines en PINECONE_ENVIRONMENT)
+    const client = new Pinecone({
+        apiKey: pineconeConfig.apiKey
     });
 
-    // Si el índice no existe, créalo.
-    const existingIndexes = await pinecone.listIndexes();
-    if (!existingIndexes.includes(pineconeConfig.indexName)) {
-        await pinecone.createIndex({
-            createRequest: {
-                name: pineconeConfig.indexName,
-                dimension: 1536,   // corresponde a embeddings de OpenAI (p. ej. text-embedding-ada-002)
-                metric: 'cosine'
+    // 5) Crear el índice si no existe, usando el formato v6.x sin “createRequest” anidado
+    try {
+        await client.createIndex({
+            name: pineconeConfig.indexName,
+            dimension: 1536,    // embeddings de text-embedding-ada-002
+            metric: 'cosine',   // opcional si quieres 'cosine' explícito
+            spec: {
+                serverless: {
+                    cloud: 'aws',     // “gcp” o “aws” o “azure”
+                    region: pineconeConfig.environment    // “us-west1” o similar
+                }
             }
         });
+        console.log(`🟢 Índice "${pineconeConfig.indexName}" creado en Pinecone.`);
+    } catch (err) {
+        // Si ya existe, Pinecone arroja un error cuyo mensaje contiene “AlreadyExists”
+        if (err.message?.includes('AlreadyExists')) {
+            console.log(`🟡 El índice "${pineconeConfig.indexName}" ya existía → omitiendo creación.`);
+        } else {
+            console.error('❌ Error creando índice en Pinecone:', err);
+            throw err;
+        }
     }
+
+    console.log(`✅ Pinecone inicializado y listo (índice: ${pineconeConfig.indexName}).`);
+    return client;
 }
 
-initPinecone()
-    .then(() => console.log(`Pinecone inicializado y listo (índice: ${pineconeConfig.indexName})`))
-    .catch(err => console.error('Error inicializando Pinecone:', err));
-
-module.exports = pinecone;
+// Exportamos una promesa que resuelve en la instancia ya inicializada
+const pineconeClientPromise = createAndInitClient();
+module.exports = pineconeClientPromise;

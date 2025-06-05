@@ -6,8 +6,8 @@
  * crea el cliente de OpenAI y expone esa misma instancia para compartirla.
  */
 
-// 1) Importar PineconeClient para inicializar el índice
-const pinecone = require('../vector/PineconeClient');
+// 1) Importamos la promesa que al resolver nos da la instancia de Pinecone
+const pineconeClientPromise = require('../vector/PineconeClient');;
 
 const { apiKey, chatModel, embedModel } = require('../../config/openaiConfig');
 
@@ -40,9 +40,9 @@ function buildDeps() {
         // … aquí puedes agregar clienteRepo, sesionChatRepo, mensajeRepo, etc.
     };
 
-    // 4) Instanciamos repositorios Pinecone, pasándoles embedClient:
+    // 4) Repositorios Pinecone: pasamos la *promesa* pineconeClientPromise
     const pineconeRepos = {
-        pineProductoRepo: new PineconeProductoRepository(pinecone, embedClient)
+        pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient)
         // … aquí agregarías pineVarianteRepo, pinePromocionRepo, etc., todos con (pinecone, embedClient)
     };
 

@@ -5,39 +5,46 @@ const MysqlProductoRepository = require('../db/MysqlProductoRepository');
 
 class PineconeProductoRepository {
     /**
-     * @param {import('@pinecone-database/pinecone').PineconeClient} pineconeInstance 
-     * @param {{ embedText: (text: string) => Promise<any> }} embedClient 
+     * @param {Promise<import('@pinecone-database/pinecone').Pinecone>} pineconePromise
+     * @param {{ embedText: (text: string) => Promise<any> }} embedClient
      */
-    constructor(pineconeInstance, embedClient) {
-        this.pinecone = pineconeInstance;
+    constructor(pineconePromise, embedClient) {
+        this.pineconePromise = pineconePromise;
         this.embedClient = embedClient;
-        this.index = this.pinecone.Index(pineconeConfig.indexName);
     }
 
-    /**
-   * Devuelve true si el índice no tiene vectores (o menos de 1).
-   * Usa describeIndexStats({ namespace }) para saber cuántos vectores hay.
-   */
     async needsSync() {
-        // describeIndexStats retorna un objeto con "namespaces"
-        // Ej: { namespaces: { productos: { vector_count: 123, ... } }, ... }
-        const stats = await this.index.describeIndexStats({ describeIndexStatsRequest: { namespace: 'productos' } });
-        const count = stats.namespaces?.productos?.vector_count || 0;
-        return count === 0;
+        // 1) Esperamos a que se resuelva la promesa del cliente Pinecone
+        const client = await this.pineconePromise;
+
+        // 2) Creamos el objeto Index (v6.x usa client.Index(indexName))
+        const index = client.Index(pineconeConfig.indexName);
+
+        try {
+            // 3) Llamamos a describeIndexStats o describeIndex para ver si existe y cuántos vectores tiene
+            const stats = await index.describeIndexStats({ describeIndexStatsRequest: {} });
+            return stats.totalVectorCount === 0;
+        } catch (err) {
+            // Si el índice no existe, Pinecone lanza PineconeNotFoundError
+            if (err.name === 'PineconeNotFoundError') {
+                return true;
+            }
+            throw err;
+        }
     }
 
-    /**
-     * Toma todos los productos activos desde la vista plana (Marca+Categoría+logo incluidos),
-     * genera embeddings via OpenAI y hace upsert en Pinecone (namespace="productos").
-     */
     async syncAllToVectorDB() {
+        // 1) Obtenemos la instancia real de PineconeClient
+        const client = await this.pineconePromise;
+        const index = client.Index(pineconeConfig.indexName);
+
+        // 2) Obtenemos todos los productos desde MySQL
         const mysqlRepo = new MysqlProductoRepository();
         const productos = await mysqlRepo.findAllActive();
-        // productos: [{ productoId, nombre, genero, marcaId, marcaNombre, logoUrl, categoriaId, categoriaNombre, createdAt }, …]
 
+        // 3) Generamos embeddings y armamos el array “vectors”
         const vectors = [];
         for (const prod of productos) {
-            // Incluimos marcaNombre, categoriaNombre y logoUrl al texto a embeddar si queremos:
             const textToEmbed = `${prod.nombre} (${prod.genero}) - Marca: ${prod.marcaNombre}, Categoría: ${prod.categoriaNombre}`;
             const embeddingResponse = await this.embedClient.embedText(textToEmbed);
             const vectorValues = embeddingResponse.data[0].embedding;
@@ -55,49 +62,47 @@ class PineconeProductoRepository {
             });
         }
 
+        // 4) Hacemos el upsert (v6.x):
         if (vectors.length > 0) {
-            await this.index.upsert({
-                upsertRequest: {
-                    vectors,
-                    namespace: 'productos'
-                }
+            await index.upsert({
+                vectors,
+                namespace: 'productos'
             });
+            console.log(`🟢 Se subieron ${vectors.length} vectores al índice "${pineconeConfig.indexName}".`);
+        } else {
+            console.log('⚠️ No hay vectores para subir (la lista está vacía).');
         }
     }
 
-    /**
-     * Búsqueda semántica en Pinecone a partir de un texto.  
-     * Devuelve topK resultados con:
-     *   { producto: { productoId, nombre, marcaNombre, categoriaNombre, logoUrl, genero }, score }.
-     */
     async semanticSearch(queryText, topK = 3) {
+        // 1) Generar embedding de la consulta
         const embeddingResponse = await this.embedClient.embedText(queryText);
         const queryVector = embeddingResponse.data[0].embedding;
 
-        const queryResponse = await this.index.query({
-            queryRequest: {
-                topK,
-                vector: queryVector,
-                includeMetadata: true,
-                namespace: 'productos'
-            }
+        // 2) Obtener cliente e índice
+        const client = await this.pineconePromise;
+        const index = client.Index(pineconeConfig.indexName);
+
+        // 3) Ejecutar query
+        const queryResponse = await index.query({
+            topK,
+            vector: queryVector,
+            includeMetadata: true,
+            namespace: 'productos'
         });
 
-        const results = [];
-        for (const match of queryResponse.matches) {
-            results.push({
-                producto: {
-                    productoId: parseInt(match.id, 10),
-                    nombre: match.metadata.nombre,
-                    marcaNombre: match.metadata.marcaNombre,
-                    logoUrl: match.metadata.logoUrl,
-                    categoriaNombre: match.metadata.categoriaNombre,
-                    genero: match.metadata.genero
-                },
-                score: match.score
-            });
-        }
-        return results;
+        // 4) Mapear los resultados
+        return queryResponse.matches.map(match => ({
+            producto: {
+                productoId: parseInt(match.id, 10),
+                nombre: match.metadata.nombre,
+                marcaNombre: match.metadata.marcaNombre,
+                logoUrl: match.metadata.logoUrl,
+                categoriaNombre: match.metadata.categoriaNombre,
+                genero: match.metadata.genero
+            },
+            score: match.score
+        }));
     }
 }
 
