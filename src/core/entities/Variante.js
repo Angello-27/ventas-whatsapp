@@ -1,44 +1,46 @@
-// core/entities/Variante.js
+// src/core/entities/Variante.js
 
 class Variante {
     /**
+     * Representa una variante “aplanada” tal como sale de la vista `vistavariantesproductos`.
+     * 
      * @param {Object} params
      * @param {number} params.varianteId
+     * @param {string} params.sku
      * @param {number} params.productoId
+     * @param {string} params.productoNombre
      * @param {string} params.color
      * @param {string} params.talla
      * @param {string|null} params.material
-     * @param {string} params.sku
      * @param {number} params.precioVenta
      * @param {number} params.cantidad
-     * @param {boolean} params.isActive
+     * @param {string|null} params.imagenPrincipalUrl
      * @param {Date|null} params.createdAt
-     * @param {Date|null} params.updatedAt
      */
     constructor({
         varianteId,
+        sku,
         productoId,
+        productoNombre,
         color,
         talla,
         material = null,
-        sku,
         precioVenta,
         cantidad,
-        isActive = true,
-        createdAt = null,
-        updatedAt = null
+        imagenPrincipalUrl = null,
+        createdAt = null
     }) {
         this.varianteId = varianteId;
+        this.sku = sku;
         this.productoId = productoId;
+        this.productoNombre = productoNombre;
         this.color = color;
         this.talla = talla;
         this.material = material;
-        this.sku = sku;
         this.precioVenta = precioVenta;
         this.cantidad = cantidad;
-        this.isActive = isActive;
+        this.imagenPrincipalUrl = imagenPrincipalUrl;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 }
 

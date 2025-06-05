@@ -1,101 +1,62 @@
-// infrastructure/db/MysqlVarianteRepository.js
+// src/infrastructure/db/MysqlVarianteRepository.js
 
 const IVarianteRepository = require('../../core/repositories/IVarianteRepository');
 const Variante = require('../../core/entities/Variante');
-const pool = require('./mysqlPool');
+const pool = require('./mysqlPool'); // tu pool de conexión a MySQL
 
+/**
+ * Implementación de IVarianteRepository que lee desde la vista `vistavariantesproductos`.
+ */
 class MysqlVarianteRepository extends IVarianteRepository {
     /**
-     * Devuelve todas las variantes asociadas a un producto.
-     * @param {number} productoId
+     * Devuelve todas las variantes activas desde la vista “vistavariantesproductos”.
      * @returns {Promise<Variante[]>}
      */
-    async findByProductoId(productoId) {
+    async findAllActive() {
         const [rows] = await pool.query(
-            `SELECT VarianteId, ProductoId, Color, Talla, Material, SKU, PrecioVenta, Cantidad, Activo AS isActive, createdAt, updatedAt
-         FROM productovariantes
-         WHERE ProductoId = ? AND Activo = 1`,
-            [productoId]
+            `SELECT * FROM vistavariantesproductos`
         );
+
         return rows.map(r => new Variante({
-            varianteId: r.VarianteId,
-            productoId: r.ProductoId,
-            color: r.Color,
-            talla: r.Talla,
-            material: r.Material,
-            sku: r.SKU,
-            precioVenta: r.PrecioVenta,
-            cantidad: r.Cantidad,
-            isActive: Boolean(r.isActive),
-            createdAt: r.createdAt,
-            updatedAt: r.updatedAt
+            varianteId: r.varianteId,
+            sku: r.sku,
+            productoId: r.productoId,
+            productoNombre: r.productoNombre,
+            color: r.color,
+            talla: r.talla,
+            material: r.material,
+            precioVenta: r.precioVenta,
+            cantidad: r.cantidad,
+            imagenPrincipalUrl: r.imagenPrincipalUrl,
+            createdAt: r.createdAt
         }));
     }
 
     /**
-     * Busca una variante por su ID.
+     * Devuelve todas las variantes activas “aplanadas” de un producto.
      * @param {number} varianteId
      * @returns {Promise<Variante|null>}
      */
     async findById(varianteId) {
         const [rows] = await pool.query(
-            `SELECT VarianteId, ProductoId, Color, Talla, Material, SKU, PrecioVenta, Cantidad, Activo AS isActive, createdAt, updatedAt
-         FROM productovariantes
-         WHERE VarianteId = ?`,
+            `SELECT * FROM vistavariantesproductos WHERE varianteId = ?`,
             [varianteId]
         );
         if (!rows.length) return null;
         const r = rows[0];
         return new Variante({
-            varianteId: r.VarianteId,
-            productoId: r.ProductoId,
-            color: r.Color,
-            talla: r.Talla,
-            material: r.Material,
-            sku: r.SKU,
-            precioVenta: r.PrecioVenta,
-            cantidad: r.Cantidad,
-            isActive: Boolean(r.isActive),
-            createdAt: r.createdAt,
-            updatedAt: r.updatedAt
+            varianteId: r.varianteId,
+            sku: r.sku,
+            productoId: r.productoId,
+            productoNombre: r.productoNombre,
+            color: r.color,
+            talla: r.talla,
+            material: r.material,
+            precioVenta: r.precioVenta,
+            cantidad: r.cantidad,
+            imagenPrincipalUrl: r.imagenPrincipalUrl,
+            createdAt: r.createdAt
         });
-    }
-
-    /**
-     * Guarda o actualiza una variante.
-     * @param {{
-     *   varianteId?: number,
-     *   productoId: number,
-     *   color: string,
-     *   talla: string,
-     *   material?: string,
-     *   sku: string,
-     *   precioVenta: number,
-     *   cantidad: number,
-     *   isActive?: boolean
-     * }} data
-     * @returns {Promise<Variante>}
-     */
-    async saveOrUpdate({ varianteId, productoId, color, talla, material = null, sku, precioVenta, cantidad, isActive = true }) {
-        if (varianteId) {
-            // Actualizar
-            await pool.query(
-                `UPDATE productovariantes
-           SET ProductoId = ?, Color = ?, Talla = ?, Material = ?, SKU = ?, PrecioVenta = ?, Cantidad = ?, Activo = ?, updatedAt = NOW()
-         WHERE VarianteId = ?`,
-                [productoId, color, talla, material, sku, precioVenta, cantidad, isActive ? 1 : 0, varianteId]
-            );
-            return this.findById(varianteId);
-        } else {
-            // Insertar
-            const [result] = await pool.query(
-                `INSERT INTO productovariantes (ProductoId, Color, Talla, Material, SKU, PrecioVenta, Cantidad, Activo, createdAt, updatedAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-                [productoId, color, talla, material, sku, precioVenta, cantidad, isActive ? 1 : 0]
-            );
-            const insertId = result.insertId;
-            return this.findById(insertId);
-        }
     }
 }
 

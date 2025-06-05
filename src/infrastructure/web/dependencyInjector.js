@@ -15,9 +15,11 @@ const OpenAIClient = require('../openai/OpenAIClient');
 
 // — MySQL Repositorios —
 const MysqlProductoRepository = require('../db/MysqlProductoRepository');
+const MysqlVarianteRepository = require('../db/MysqlVarianteRepository');
 
 // — Pinecone (vectorial) Repositorios —
 const PineconeProductoRepository = require('../vector/PineconeProductoRepository');
+const PineconeVarianteRepository = require('../vector/PineconeVarianteRepository');
 // …otros repositorios MySQL y Pinecone…
 
 
@@ -36,13 +38,15 @@ function buildDeps() {
 
     // 3) Instanciamos repositorios MySQL
     const mysqlRepos = {
-        productoRepo: new MysqlProductoRepository()
+        productoRepo: new MysqlProductoRepository(),
+        varianteRepo: new MysqlVarianteRepository()
         // … aquí puedes agregar clienteRepo, sesionChatRepo, mensajeRepo, etc.
     };
 
     // 4) Repositorios Pinecone: pasamos la *promesa* pineconeClientPromise
     const pineconeRepos = {
-        pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient)
+        pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient),
+        pineVarianteRepo: new PineconeVarianteRepository(pineconeClientPromise, embedClient)
         // … aquí agregarías pineVarianteRepo, pinePromocionRepo, etc., todos con (pinecone, embedClient)
     };
 

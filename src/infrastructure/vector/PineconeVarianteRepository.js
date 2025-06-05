@@ -1,109 +1,141 @@
 // src/infrastructure/vector/PineconeVarianteRepository.js
 
-const { PineconeClient } = require('@pinecone-database/pinecone');
 const pineconeConfig = require('../../config/pineconeConfig');
-const OpenAIClient = require('../../openai/OpenAIClient');
 const MysqlVarianteRepository = require('../db/MysqlVarianteRepository');
 
 class PineconeVarianteRepository {
-    constructor() {
-        this.pinecone = new PineconeClient();
-        this.openaiClient = new OpenAIClient({
-            apiKey: process.env.OPENAI_API_KEY,
-            model: process.env.OPENAI_MODEL || 'text-embedding-ada-002'
-        });
-        this.init();
-    }
-
-    async init() {
-        await this.pinecone.init({
-            apiKey: pineconeConfig.apiKey,
-            environment: pineconeConfig.environment
-        });
-        const existing = await this.pinecone.listIndexes();
-        if (!existing.includes(pineconeConfig.indexName)) {
-            await this.pinecone.createIndex({
-                createRequest: {
-                    name: pineconeConfig.indexName,
-                    dimension: 1536,
-                    metric: 'cosine'
-                }
-            });
-        }
-        this.index = this.pinecone.Index(pineconeConfig.indexName);
+    /**
+     * @param {Promise<import('@pinecone-database/pinecone').Pinecone>} pineconePromise
+     * @param {{ embedText: (text: string) => Promise<any> }} embedClient
+     */
+    constructor(pineconePromise, embedClient) {
+        this.alreadySynced = false;
+        this.pineconePromise = pineconePromise;
+        this.embedClient = embedClient;
     }
 
     /**
-     * Reindexa todas las variantes activas en MySQL: genera un embedding a partir
-     * de SKU + color + talla + material, y hace upsert en namespace="variantes".
+     * Devuelve true si la namespace "variantes" NO tiene vectores (vectorCount === 0).
+     * Si no existe, devuelve true para que se cree y sincronicen.
      */
-    async syncAllToVectorDB() {
-        const mysqlRepo = new MysqlVarianteRepository();
-        const variantes = await mysqlRepo.findAllActive();
-        // findAllActive() debería devolver:
-        // [ { varianteId, sku, color, talla, material, productoId, … }, … ]
+    async needsSync() {
+        if (this.alreadySynced) return false;
 
-        const vectors = [];
-        for (const varian of variantes) {
-            const textToEmbed = `${varian.sku}: ${varian.color} ${varian.talla} ${varian.material}`;
-            const embeddingResponse = await this.openaiClient.embedText(textToEmbed);
-            const vectorValues = embeddingResponse.data[0].embedding;
+        const client = await this.pineconePromise;
+        const index = client.Index(pineconeConfig.indexName);
 
-            vectors.push({
-                id: varian.varianteId.toString(),
-                values: vectorValues,
-                metadata: {
-                    sku: varian.sku,
-                    color: varian.color,
-                    talla: varian.talla,
-                    productoId: varian.productoId
-                }
-            });
-        }
-
-        if (vectors.length > 0) {
-            await this.index.upsert({
-                upsertRequest: {
-                    vectors,
+        try {
+            // Describir solo la namespace "variantes"
+            const statsResponse = await index.describeIndexStats({
+                describeIndexStatsRequest: {
                     namespace: 'variantes'
                 }
             });
+
+            // statsResponse.namespaces["variantes"].vectorCount es el número de vectores
+            const namespaceInfo = statsResponse.namespaces?.variantes;
+            const count = namespaceInfo ? namespaceInfo.vectorCount : 0;
+            return (count === 0);
+        } catch (err) {
+            if (err.name === 'PineconeNotFoundError') {
+                return true;
+            }
+            throw err;
         }
     }
 
     /**
-     * Búsqueda semántica en variantes a partir de un texto descriptivo.
-     * @param {string} queryText
-     * @param {number} topK
-     * @returns [ { variante: { varianteId, sku, color, talla, productoId }, score }, … ]
+     * Toma todas las variantes activas (desde MySQL), genera embeddings y hace upsert en Pinecone.
      */
-    async semanticSearch(queryText, topK = 3) {
-        const embeddingResponse = await this.openaiClient.embedText(queryText);
-        const queryVector = embeddingResponse.data[0].embedding;
+    async syncAllToVectorDB() {
+        const client = await this.pineconePromise;
+        const index = client.Index(pineconeConfig.indexName);
 
-        const queryResponse = await this.index.query({
-            queryRequest: {
-                topK,
-                vector: queryVector,
-                includeMetadata: true,
-                namespace: 'variantes'
-            }
-        });
+        // 1) Obtener todas las variantes ya “aplanadas”
+        const mysqlRepo = new MysqlVarianteRepository();
+        const variantes = await mysqlRepo.findAllActive();
 
-        const results = [];
-        for (const match of queryResponse.matches) {
-            results.push({
-                variante: {
-                    varianteId: parseInt(match.id, 10),
-                    sku: match.metadata.sku,
-                    color: match.metadata.color,
-                    talla: match.metadata.talla,
-                    productoId: match.metadata.productoId
-                },
-                score: match.score
+        // 2) Generar vectores: combinamos campos relevantes para embeddar
+        const vectors = [];
+        for (const v of variantes) {
+            // Por ejemplo, concatenamos: productoNombre + color + talla + material + precio
+            const textToEmbed =
+                `${v.productoNombre} – Variante: Color ${v.color}, Talla ${v.talla}` +
+                (v.material ? `, Material ${v.material}` : '') +
+                `. Precio: ${v.precioVenta}`;
+
+            const embeddingResponse = await this.embedClient.embedText(textToEmbed);
+            const vectorValues = embeddingResponse.data[0].embedding;
+
+            vectors.push({
+                id: v.varianteId.toString(),
+                values: vectorValues,
+                metadata: {
+                    sku: v.sku,
+                    productoNombre: v.productoNombre,
+                    color: v.color,
+                    talla: v.talla,
+                    material: v.material,
+                    precioVenta: v.precioVenta,
+                    cantidad: v.cantidad,
+                    imagenPrincipalUrl: v.imagenPrincipalUrl
+                }
             });
         }
-        return results;
+
+        // 3) Upsert en namespace "variantes"
+        if (vectors.length > 0) {
+            await index.upsert(
+                vectors,
+                { namespace: 'variantes' }
+            );
+            console.log(`🟢 Se subieron ${vectors.length} vectores al índice "${pineconeConfig.indexName}" (namespace "variantes").`);
+        } else {
+            console.log('⚠️ No hay vectores de variantes para subir (lista vacía).');
+        }
+
+        this.alreadySynced = true;
+    }
+
+    /**
+     * Búsqueda semántica en las variantes. Devuelve up to topK resultados.
+     */
+    async semanticSearch(queryText, topK = 3) {
+        // 1) Generar embedding de la consulta
+        const embeddingResponse = await this.embedClient.embedText(queryText);
+        const queryVector = embeddingResponse.data[0].embedding;
+
+        // 2) Obtener cliente e índice
+        const client = await this.pineconePromise;
+        const index = client.Index(pineconeConfig.indexName);
+
+        // 3) Ejecutar query (namespace "variantes")
+        const queryResponse = await index.query(
+            {
+                topK: topK,
+                vector: queryVector,
+                includeMetadata: true
+            },
+            {
+                namespace: 'variantes'
+            }
+        );
+
+        // 4) Mapear resultados a un objeto más legible
+        return queryResponse.matches.map(match => ({
+            variante: {
+                varianteId: parseInt(match.id, 10),
+                sku: match.metadata.sku,
+                productoNombre: match.metadata.productoNombre,
+                color: match.metadata.color,
+                talla: match.metadata.talla,
+                material: match.metadata.material,
+                precioVenta: match.metadata.precioVenta,
+                cantidad: match.metadata.cantidad,
+                imagenPrincipalUrl: match.metadata.imagenPrincipalUrl
+            },
+            score: match.score
+        }));
     }
 }
 
