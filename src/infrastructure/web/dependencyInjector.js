@@ -16,6 +16,8 @@ const OpenAIClient = require('../openai/OpenAIClient');
 // — MySQL Repositorios —
 const MysqlProductoRepository = require('../db/MysqlProductoRepository');
 const MysqlVarianteRepository = require('../db/MysqlVarianteRepository');
+// Importamos el repositorio unificado de Chat (cliente/sesión/mensajes)
+const MySQLChatRepository = require('../db/MySQLChatRepository'); F
 
 // — Pinecone (vectorial) Repositorios —
 const PineconeProductoRepository = require('../vector/PineconeProductoRepository');
@@ -39,7 +41,9 @@ function buildDeps() {
     // 3) Instanciamos repositorios MySQL
     const mysqlRepos = {
         productoRepo: new MysqlProductoRepository(),
-        varianteRepo: new MysqlVarianteRepository()
+        varianteRepo: new MysqlVarianteRepository(),
+        // Agregamos aquí la instancia de MySQLChatRepository:
+        chatRepo: new MySQLChatRepository()
         // … aquí puedes agregar clienteRepo, sesionChatRepo, mensajeRepo, etc.
     };
 
@@ -55,9 +59,9 @@ function buildDeps() {
             ...mysqlRepos,
             ...pineconeRepos
         },
-        chatClient,   // para manejar conversaciones
-        embedClient,   // para generar embeddings
-        pineconeRepos // Exponemos solo el grupo Pinecone para sincronizar más tarde
+        chatClient,    // para manejar conversaciones (OpenAI chat)
+        embedClient,   // para generar embeddings (OpenAI embeddings)
+        pineconeRepos  // Exponemos solo el grupo Pinecone para sincronizar más tarde
     };
 }
 
