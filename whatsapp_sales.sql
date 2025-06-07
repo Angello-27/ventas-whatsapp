@@ -69,8 +69,8 @@ INSERT INTO `categoria` (`CategoriaId`, `Nombre`, `PadreCategoriaId`, `createdAt
 
 CREATE TABLE `clientes` (
   `ClienteId` int(11) NOT NULL,
-  `Telefono` varchar(50) NOT NULL,
-  `Nombre` varchar(150) DEFAULT NULL,
+  `Telefono` varchar(100) NOT NULL,
+  `Nombre` varchar(255) DEFAULT NULL,
   `Email` varchar(150) DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
   `isActive` tinyint(1) NOT NULL DEFAULT 1
@@ -153,7 +153,7 @@ CREATE TABLE `productoimagenes` (
 
 CREATE TABLE `productos` (
   `ProductoId` int(11) NOT NULL,
-  `Nombre` varchar(150) NOT NULL,
+  `Nombre` varchar(255) NOT NULL,
   `Genero` enum('Hombre','Mujer','Niños','Unisex') NOT NULL,
   `MarcaId` int(11) NOT NULL,
   `CategoriaId` int(11) NOT NULL,
@@ -226,8 +226,8 @@ CREATE TABLE `productovariantes` (
   `ProductoId` int(11) NOT NULL,
   `Color` varchar(50) NOT NULL,
   `Talla` varchar(10) NOT NULL,
-  `Material` varchar(50) DEFAULT NULL,
-  `SKU` varchar(50) NOT NULL,
+  `Material` varchar(100) DEFAULT NULL,
+  `SKU` varchar(100) NOT NULL,
   `PrecioVenta` decimal(10,2) NOT NULL DEFAULT 0.00,
   `Cantidad` int(11) NOT NULL DEFAULT 0,
   `createdAt` datetime DEFAULT current_timestamp(),
@@ -296,10 +296,12 @@ INSERT INTO `productovariantes` (`VarianteId`, `ProductoId`, `Color`, `Talla`, `
 
 CREATE TABLE `promociones` (
   `PromocionId` int(11) NOT NULL,
-  `Titulo` varchar(150) NOT NULL,
+  `Titulo` varchar(255) NOT NULL,
   `DescuentoPct` decimal(5,2) NOT NULL,
   `FechaInicio` date NOT NULL,
   `FechaFin` date NOT NULL,
+  `TipoPromo` ENUM('Categoria','Marca','Producto') NOT NULL,
+  `TargetId`  INT(11) NOT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
   `isActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
