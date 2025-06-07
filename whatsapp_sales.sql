@@ -417,6 +417,7 @@ CREATE TABLE `sesiones` (
   `ClienteId` int(11) NOT NULL,
   `IniciadoEn` datetime DEFAULT current_timestamp(),
   `FinalizadoEn` datetime DEFAULT NULL,
+  `UltimoContexto` JSON NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
   `IsActive` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
