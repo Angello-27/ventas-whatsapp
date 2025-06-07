@@ -295,15 +295,17 @@ INSERT INTO `productovariantes` (`VarianteId`, `ProductoId`, `Color`, `Talla`, `
 --
 
 CREATE TABLE `promociones` (
-  `PromocionId` int(11) NOT NULL,
-  `Titulo` varchar(255) NOT NULL,
-  `DescuentoPct` decimal(5,2) NOT NULL,
-  `FechaInicio` date NOT NULL,
-  `FechaFin` date NOT NULL,
-  `TipoPromo` ENUM('Categoria','Marca','Producto') NOT NULL,
-  `TargetId`  INT(11) NOT NULL,
-  `createdAt` datetime DEFAULT current_timestamp(),
-  `isActive` tinyint(1) DEFAULT 1
+  `PromocionId`   INT(11)          NOT NULL AUTO_INCREMENT,
+  `Titulo`        VARCHAR(150)     NOT NULL,
+  `DescuentoPct`  DECIMAL(5,2)     NOT NULL,
+  `FechaInicio`   DATE             NOT NULL,
+  `FechaFin`      DATE             NOT NULL,
+  `TipoPromo`     ENUM('Categoria','Marca','Producto') NOT NULL,
+  `TargetId`      INT(11)          NOT NULL,
+  `Cobertura`     DECIMAL(4,2)     NOT NULL DEFAULT 1.00,
+  `Genero`        ENUM('Hombre','Mujer','Niños','Unisex') NOT NULL DEFAULT 'Unisex',
+  `createdAt`     DATETIME         DEFAULT CURRENT_TIMESTAMP(),
+  `isActive`      TINYINT(1)       DEFAULT 1,
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -343,22 +345,22 @@ INSERT INTO `promociones` (`PromocionId`, `Titulo`, `DescuentoPct`, `FechaInicio
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `promocion_variantes`
+-- Estructura de tabla para la tabla `promocionproductos`
 --
 
-CREATE TABLE `promocion_variantes` (
-  `PromocionVarianteId` int(11) NOT NULL,
-  `PromocionId` int(11) NOT NULL,
-  `VarianteId` int(11) NOT NULL,
-  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `isActive` tinyint(1) DEFAULT 1
+CREATE TABLE `promocionproductos` (
+  `PromocionProductoId` INT(11)      NOT NULL AUTO_INCREMENT,
+  `PromocionId`         INT(11)      NOT NULL,
+  `ProductoId`          INT(11)      NOT NULL,
+  `createdAt`           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  `isActive`            TINYINT(1)   DEFAULT 1,
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `promocion_variantes`
+-- Volcado de datos para la tabla `promocionproductos`
 --
 
-INSERT INTO `promocion_variantes` (`PromocionVarianteId`, `PromocionId`, `VarianteId`, `createdAt`, `isActive`) VALUES
+INSERT INTO `promocionproductos` (`PromocionProductoId`, `PromocionId`, `ProductoId`, `createdAt`, `isActive`) VALUES
 (49, 1, 1, '2025-06-05 01:15:32', 1),
 (50, 1, 2, '2025-06-05 01:15:32', 1),
 (51, 2, 3, '2025-06-05 01:15:32', 1),
@@ -492,12 +494,12 @@ ALTER TABLE `promociones`
   ADD PRIMARY KEY (`PromocionId`);
 
 --
--- Indices de la tabla `promocion_variantes`
+-- Indices de la tabla `promocionproductos`
 --
-ALTER TABLE `promocion_variantes`
-  ADD PRIMARY KEY (`PromocionVarianteId`),
+ALTER TABLE `promocionproductos`
+  ADD PRIMARY KEY (`PromocionProductoId`),
   ADD KEY `PromocionId` (`PromocionId`),
-  ADD KEY `VarianteId` (`VarianteId`);
+  ADD KEY `ProductoId` (`ProductoId`);
 
 --
 -- Indices de la tabla `sesiones`
@@ -565,10 +567,10 @@ ALTER TABLE `promociones`
   MODIFY `PromocionId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
--- AUTO_INCREMENT de la tabla `promocion_variantes`
+-- AUTO_INCREMENT de la tabla `promocionproductos`
 --
-ALTER TABLE `promocion_variantes`
-  MODIFY `PromocionVarianteId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
+ALTER TABLE `promocionproductos`
+  MODIFY `PromocionProductoId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
 
 --
 -- AUTO_INCREMENT de la tabla `sesiones`
@@ -618,11 +620,11 @@ ALTER TABLE `productovariantes`
   ADD CONSTRAINT `productovariantes_ibfk_1` FOREIGN KEY (`ProductoId`) REFERENCES `productos` (`ProductoId`);
 
 --
--- Filtros para la tabla `promocion_variantes`
+-- Filtros para la tabla `promocionproductos`
 --
-ALTER TABLE `promocion_variantes`
-  ADD CONSTRAINT `promocion_variantes_ibfk_1` FOREIGN KEY (`PromocionId`) REFERENCES `promociones` (`PromocionId`),
-  ADD CONSTRAINT `promocion_variantes_ibfk_2` FOREIGN KEY (`VarianteId`) REFERENCES `productovariantes` (`VarianteId`);
+ALTER TABLE `promocionproductos`
+  ADD CONSTRAINT `promocionproductos_ibfk_1` FOREIGN KEY (`PromocionId`) REFERENCES `promociones` (`PromocionId`),
+  ADD CONSTRAINT `promocionproductos_ibfk_2` FOREIGN KEY (`ProductoId`) REFERENCES `productos` (`ProductoId`);
 
 --
 -- Filtros para la tabla `sesiones`

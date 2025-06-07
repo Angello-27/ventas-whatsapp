@@ -38,6 +38,17 @@ const genders = ['Hombre', 'Mujer', 'Niños', 'Unisex'];
 // Categorías femeninas
 const femaleCats = [8, 9, 12]; // Blusas, Vestidos, Faldas
 
+// Fechas de inicio y fin según temporada (hemisferio sur, Bolivia)
+const seasons = ['Verano', 'Invierno'];
+const seasonDates = {
+    Verano: { start: '2025-12-01', end: '2026-03-31' },
+    Invierno: { start: '2025-06-01', end: '2025-08-31' }
+};
+
+// opciones de promoción
+const promoKeywords = ['Rebaja', 'Oferta', 'Descuento', 'Liquidación', 'Promoción'];
+const discountOptions = [5, 10, 15, 20, 25, 30];
+
 // Tallas y colores
 const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 const colors = ['Rojo', 'Azul', 'Verde', 'Negro', 'Blanco', 'Amarillo', 'Morado', 'Marrón', 'Gris', 'Rosa'];
@@ -102,14 +113,6 @@ function sample(arr, count) {
     return out;
 }
 
-// 1) Pre-calcular precio fijo por producto, tomando priceRange de la categoría:
-const priceMap = {};
-Object.entries(productInfo).forEach(([id, info]) => {
-    const cat = categories.find(c => c.id === info.catId);
-    const [min, max] = cat?.priceRange || [10, 50];
-    priceMap[id] = +(min + Math.random() * (max - min)).toFixed(2);
-})
-
 let prodId = 0;
 let varId = 0;
 let promoId = 0;
@@ -118,6 +121,9 @@ const productVariantIds = {};
 const brandVariantIds = {};
 const categoryVariantIds = {};
 const productInfo = {};
+
+const promoMeta = {};
+const seenPromos = { Categoria: new Set(), Marca: new Set(), Producto: new Set() };
 
 console.log('-- Productos');
 categories.forEach(cat => {
@@ -130,18 +136,35 @@ categories.forEach(cat => {
             : g;
 
         brands.forEach(b => {
-            const baseName = cat.singular;            // <-- usamos "singular"
+            const baseName = cat.singular; // <-- usamos "singular"
             // 3) sólo ponemos "de" cuando NO es Unisex
             const name = (displayGender === 'Unisex')
                 ? `${baseName} ${displayGender} ${b.name}`
                 : `${baseName} de ${displayGender} ${b.name}`;
+
+            prodId++;
+            productInfo[prodId] = {
+                catId: cat.id,
+                brandId: b.id,
+                gender: g,
+                name: name
+            };
             console.log(
-                `INSERT INTO productos (Nombre,Genero,MarcaId,CategoriaId) VALUES ('${name}','${g}',${b.id},${cat.id});`
+                `INSERT INTO productos (Nombre,Genero,MarcaId,CategoriaId) ` +
+                `VALUES ('${name}','${g}',${b.id},${cat.id});`
             );
         });
     });
 });
 
+// 1) Pre-calcular precio fijo por producto, tomando priceRange de la categoría:
+const priceMap = {};
+Object.entries(productInfo).forEach(([id, info]) => {
+    const cat = categories.find(c => c.id === info.catId);
+    const [min, max] = cat?.priceRange || [10, 50];
+    const precioBase = +(min + Math.random() * (max - min)).toFixed(2);
+    priceMap[id] = precioBase;
+})
 
 console.log('\n-- Variantes');// 2) Generar variantes usando sku padded y precio uniforme:
 Object.entries(productInfo).forEach(([id, info]) => {
@@ -180,62 +203,95 @@ Object.entries(productInfo).forEach(([id, info]) => {
     }));
 });
 
-// opciones de promoción
-const promoKeywords = ['Rebaja', 'Oferta', 'Descuento', 'Liquidación', 'Promoción'];
-const seasons = ['Verano', 'Invierno'];
-const discountOptions = [5, 10, 15, 20, 25, 30];
-
+// Al generar cada promo:
 console.log('\n-- promociones');
 Object.entries(productInfo).forEach(([id, info]) => {
-    promoId++;
     const pct = pick(discountOptions);
     const season = pick(seasons);
     const { start, end } = seasonDates[season];
-    const kind = pick(['Categoria','Marca','Producto']);
-    const key = kind === 'Categoria'
+
+    // Elegir tipo y target
+    const tipo = pick(['Categoria', 'Marca', 'Producto']);
+    const key = tipo === 'Categoria'
         ? info.catId
-        : kind === 'Marca'
+        : tipo === 'Marca'
             ? info.brandId
-            : id;
+            : Number(id);
 
     // Evitar duplicados (opcional)
-    if (seenPromos[kind].has(key)) return;
-    seenPromos[kind].add(key);
+    if (seenPromos[tipo].has(key)) return;
 
-    // Construir Título
-    let title;
-    if (kind === 'Categoria') {
+    promoId++;
+    seenPromos[tipo].add(key);
+
+    // Calcular cobertura sólo si no es producto
+    const cobertura = tipo === 'Producto'
+        ? 1.00
+        : pick([1, 0.5, 0.25, 0.33]);
+
+    // si es promo-producto, heredamos el género del producto
+    const promoGenero = tipo === 'Producto' ? info.gender : pick(genders);
+
+    // ahora construimos el sufijo de género sólo para Marca/Categoría
+    const genderSuffix =
+        (promoGenero === 'Unisex' || tipo === 'Producto')
+            ? ''
+            : ` para ${promoGenero}`;
+
+    // Construcción del título
+    let titulo;
+    if (tipo === 'Categoria') {
         const catName = categories.find(c => c.id === info.catId).name;
-        title = `${pick(promoKeywords)} de ${season} en ${catName} -${pct}%`;
-    } else if (kind === 'Marca') {
+        titulo = `${pick(promoKeywords)} de ${catName}${genderSuffix} -${pct}%`;
+    } else if (tipo === 'Marca') {
         const brandName = brands.find(b => b.id === info.brandId).name;
-        title = `${pick(promoKeywords)} de ${season} en ${brandName} -${pct}%`;
-    } else {
-        title = `${pick(promoKeywords)} ${info.name} -${pct}%`;
+        titulo = `${pick(promoKeywords)} de ${season} en ${brandName}${genderSuffix} -${pct}%`;
+    } else { // Producto
+        // info.name ya lleva el género, y no ponemos sufijo
+        titulo = `${pick(promoKeywords)} en ${info.name} -${pct}%`;
     }
 
+    // Insert en promociones
     console.log(
         `INSERT INTO promociones ` +
-        `(Titulo,DescuentoPct,FechaInicio,FechaFin,TipoPromo,TargetId) VALUES ` +
-        `('${title}',${pct},'${start}','${end}','${kind}',${key});`
+        `(Titulo,DescuentoPct,FechaInicio,FechaFin,TipoPromo,TargetId,Cobertura,Genero) VALUES ` +
+        `('${titulo}',${pct},'${start}','${end}','${tipo}',${key},${cobertura.toFixed(2)},'${promoGenero}');`
     );
+
+    // Y guardamos también en promoMeta:
+    promoMeta[promoId] = { tipo, key, cobertura, genero: promoGenero };
 });
 
-
-console.log('\n-- promocion_variantes');
-// vincular variantes a promociones (misma count)
+console.log('\n-- promocion_productos');
 for (let pid = 1; pid <= promoId; pid++) {
-    const info = productInfo[pid];
-    const kind = pid; // reuse pid: promotion i corresponde product i
-    // determinar tipo según título
-    const promo = null; // omit fetch
-    // asume tipo product para promoId pid
-    const variants = productVariantIds[pid];
-    // muestra al menos 1, o 25%, o 50%, o todos
-    const factor = pick([1, 0.5, 0.25, 0.75]);
-    const count = Math.max(1, Math.floor(variants.length * factor));
-    const sel = sample(variants, count);
-    sel.forEach(vid => {
-        console.log(`INSERT INTO promocion_variantes (PromocionId,VarianteId) VALUES (${pid},${vid});`);
+    const { tipo, key, cobertura, genero } = promoMeta[pid];
+
+    // Sólo expandimos cuando es categoría o marca
+    if (tipo === 'Producto') continue;
+
+    // 1) Productos elegibles según categoría/marca
+    let elegibles = Object.entries(productInfo)
+        .filter(([_, info]) =>
+            (tipo === 'Categoria' && info.catId === key) ||
+            (tipo === 'Marca' && info.brandId === key)
+        )
+        .map(([id, info]) => ({ id: Number(id), genero: info.gender }));
+
+    // 2) Filtrar por género: incluimos sólo los que coinciden o ‘Unisex’
+    elegibles = elegibles
+        .filter(p => p.genero === genero || p.genero === 'Unisex')
+        .map(p => p.id);
+
+    // 3) Elegir X productos según cobertura
+    const count = Math.max(1, Math.floor(elegibles.length * cobertura));
+    const sel = sample(elegibles, count);
+
+    // 4) Insert detalle
+    sel.forEach(prodId => {
+        console.log(
+            `INSERT INTO promocion_productos ` +
+            `(PromocionId,ProductoId) VALUES ` +
+            `(${pid},${prodId});`
+        );
     });
 }
