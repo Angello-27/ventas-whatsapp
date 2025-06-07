@@ -17,7 +17,7 @@ const OpenAIClient = require('../openai/OpenAIClient');
 const MysqlProductoRepository = require('../db/MysqlProductoRepository');
 const MysqlVarianteRepository = require('../db/MysqlVarianteRepository');
 // Importamos el repositorio unificado de Chat (cliente/sesión/mensajes)
-const MySQLChatRepository = require('../db/MySQLChatRepository'); F
+const MySQLChatRepository = require('../db/MySQLChatRepository');
 
 // — Pinecone (vectorial) Repositorios —
 const PineconeProductoRepository = require('../vector/PineconeProductoRepository');

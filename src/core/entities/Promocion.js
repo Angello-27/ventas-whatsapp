@@ -10,7 +10,6 @@ class Promocion {
      * @param {string|Date} params.fechaFin      // YYYY-MM-DD o Date
      * @param {boolean} params.activa
      * @param {Date|null} params.createdAt
-     * @param {Date|null} params.updatedAt
      */
     constructor({
         promocionId,
@@ -19,8 +18,7 @@ class Promocion {
         fechaInicio,
         fechaFin,
         activa = true,
-        createdAt = null,
-        updatedAt = null
+        createdAt = null
     }) {
         this.promocionId = promocionId;
         this.titulo = titulo;
@@ -29,7 +27,6 @@ class Promocion {
         this.fechaFin = fechaFin;
         this.activa = activa;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 }
 

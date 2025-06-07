@@ -4,14 +4,6 @@ const { buildSystemChatPrompt } = require('../../infrastructure/openai/prompts/b
 const { buildUserChatPrompt } = require('../../infrastructure/openai/prompts/userChatPrompt');
 const { searchProducts } = require('./services/searchProducts');
 const { searchVariants } = require('./services/searchVariants');
-const clothingTerms = require('../constants/clothingTerms');
-
-/**
- * Verifica si algún término de targetTerms aparece en keywords (ambos en minúsculas).
- */
-function containsTerm(keywords, targetTerms) {
-  return keywords.some(kw => targetTerms.includes(kw.toLowerCase()));
-}
 
 /**
  * Caso de uso: procesa un mensaje entrante de WhatsApp.

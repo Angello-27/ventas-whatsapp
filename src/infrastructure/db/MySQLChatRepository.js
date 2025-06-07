@@ -90,7 +90,7 @@ class MySQLChatRepository extends IClienteRepository {
      */
     async findActiveByClienteId(clienteId) {
         const sql = `
-      SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, isActive, createdAt, updatedAt
+      SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, isActive, createdAt
       FROM sesiones
       WHERE ClienteId = ? AND FinalizadoEn IS NULL AND isActive = 1
       ORDER BY IniciadoEn DESC
@@ -106,27 +106,26 @@ class MySQLChatRepository extends IClienteRepository {
             iniciadoEn: r.IniciadoEn,
             finalizadoEn: r.FinalizadoEn,
             isActive: Boolean(r.isActive),
-            createdAt: r.createdAt,
-            updatedAt: r.updatedAt
+            createdAt: r.createdAt
         });
     }
 
     /**
-     * Crea una nueva sesión para un cliente (createdAt, updatedAt se ponen con NOW()).
+     * Crea una nueva sesión para un cliente (createdAt se ponen con NOW()).
      * @param {{ clienteId: number }} data
      * @returns {Promise<SesionChat>}
      */
     async createSession({ clienteId }) {
         const sql = `
-      INSERT INTO sesiones (ClienteId, IniciadoEn, FinalizadoEn, createdAt, updatedAt, isActive)
-      VALUES (?, NOW(), NULL, NOW(), NOW(), 1)
+      INSERT INTO sesiones (ClienteId, IniciadoEn, FinalizadoEn, createdAt, isActive)
+      VALUES (?, NOW(), NULL, NOW(), 1)
     `;
         const [result] = await pool.query(sql, [clienteId]);
         const insertId = result.insertId;
 
         // Recuperamos la sesión recien creada
         const [rows] = await pool.query(
-            `SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, isActive, createdAt, updatedAt
+            `SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, isActive, createdAt
          FROM sesiones
          WHERE SesionId = ?
          LIMIT 1`,
@@ -139,13 +138,12 @@ class MySQLChatRepository extends IClienteRepository {
             iniciadoEn: r.IniciadoEn,
             finalizadoEn: r.FinalizadoEn,
             isActive: Boolean(r.isActive),
-            createdAt: r.createdAt,
-            updatedAt: r.updatedAt
+            createdAt: r.createdAt
         });
     }
 
     /**
-     * Marca una sesión como finalizada (FinalizadoEn=NOW(), isActive=0, updatedAt=NOW()).
+     * Marca una sesión como finalizada (FinalizadoEn=NOW(), isActive=0).
      * @param {number} sesionId
      * @returns {Promise<void>}
      */
@@ -154,7 +152,6 @@ class MySQLChatRepository extends IClienteRepository {
       UPDATE sesiones
       SET FinalizadoEn = NOW(),
           isActive     = 0,
-          updatedAt    = NOW()
       WHERE SesionId = ?
     `;
         await pool.query(sql, [sesionId]);

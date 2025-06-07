@@ -9,7 +9,6 @@ class SesionChat {
      * @param {Date|null} params.finalizadoEn
      * @param {boolean} params.isActive
      * @param {Date} params.createdAt
-     * @param {Date|null} params.updatedAt
      */
     constructor({
         sesionId,
@@ -17,8 +16,7 @@ class SesionChat {
         iniciadoEn = null,
         finalizadoEn = null,
         isActive = true,
-        createdAt = null,
-        updatedAt = null
+        createdAt = null
     }) {
         this.sesionId = sesionId;
         this.clienteId = clienteId;
@@ -26,7 +24,6 @@ class SesionChat {
         this.finalizadoEn = finalizadoEn;
         this.isActive = isActive;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 }
 

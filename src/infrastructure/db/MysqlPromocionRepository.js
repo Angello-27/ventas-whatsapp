@@ -11,7 +11,7 @@ class MysqlPromocionRepository extends IPromocionRepository {
      */
     async findAllActive() {
         const [rows] = await pool.query(
-            `SELECT PromocionId, Titulo, DescuentoPct, FechaInicio, FechaFin, Activa, createdAt, updatedAt
+            `SELECT PromocionId, Titulo, DescuentoPct, FechaInicio, FechaFin, Activa, createdAt
          FROM promociones
          WHERE Activa = 1
            AND NOW() BETWEEN FechaInicio AND FechaFin`
@@ -23,8 +23,7 @@ class MysqlPromocionRepository extends IPromocionRepository {
             fechaInicio: r.FechaInicio,
             fechaFin: r.FechaFin,
             activa: Boolean(r.Activa),
-            createdAt: r.createdAt,
-            updatedAt: r.updatedAt
+            createdAt: r.createdAt
         }));
     }
 
@@ -37,7 +36,7 @@ class MysqlPromocionRepository extends IPromocionRepository {
      */
     async findActiveByProductoId(productoId) {
         const [rows] = await pool.query(
-            `SELECT DISTINCT p.PromocionId, p.Titulo, p.DescuentoPct, p.FechaInicio, p.FechaFin, p.Activa, p.createdAt, p.updatedAt
+            `SELECT DISTINCT p.PromocionId, p.Titulo, p.DescuentoPct, p.FechaInicio, p.FechaFin, p.Activa, p.createdAt
          FROM promociones p
          JOIN promocion_variantes pv ON p.PromocionId = pv.PromocionId
          JOIN productovariantes v ON pv.VarianteId = v.VarianteId
@@ -53,8 +52,7 @@ class MysqlPromocionRepository extends IPromocionRepository {
             fechaInicio: r.FechaInicio,
             fechaFin: r.FechaFin,
             activa: Boolean(r.Activa),
-            createdAt: r.createdAt,
-            updatedAt: r.updatedAt
+            createdAt: r.createdAt
         }));
     }
 
@@ -65,7 +63,7 @@ class MysqlPromocionRepository extends IPromocionRepository {
      */
     async findActiveByCategoriaId(categoriaId) {
         const [rows] = await pool.query(
-            `SELECT DISTINCT p.PromocionId, p.Titulo, p.DescuentoPct, p.FechaInicio, p.FechaFin, p.Activa, p.createdAt, p.updatedAt
+            `SELECT DISTINCT p.PromocionId, p.Titulo, p.DescuentoPct, p.FechaInicio, p.FechaFin, p.Activa, p.createdAt
          FROM promociones p
          JOIN promocion_variantes pv ON p.PromocionId = pv.PromocionId
          JOIN productovariantes v ON pv.VarianteId = v.VarianteId
@@ -83,7 +81,6 @@ class MysqlPromocionRepository extends IPromocionRepository {
             fechaFin: r.FechaFin,
             activa: Boolean(r.Activa),
             createdAt: r.createdAt,
-            updatedAt: r.updatedAt
         }));
     }
 }

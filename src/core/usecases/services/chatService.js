@@ -41,18 +41,17 @@ async function processMessage({ from, body }, repos, chatClient, usecaseHandler)
     }
 
     // 3) GUARDAR mensaje entrante
-    await chatRepo.save({
+    await chatRepo.saveMessage({
         sesionId: sesion.sesionId,
         direccion: 'Entrante',
         contenido: body
     });
 
     // 4) INVOCAR el use case para generar la respuesta
-    //    Se pasa { from, body }, repos, chatClient tal cual lo espera el use case
     const reply = await usecaseHandler({ from, body }, repos, chatClient);
 
     // 5) GUARDAR mensaje saliente
-    await chatRepo.save({
+    await chatRepo.saveMessage({
         sesionId: sesion.sesionId,
         direccion: 'Saliente',
         contenido: reply
