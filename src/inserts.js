@@ -1,19 +1,35 @@
 // generateInserts.js
+
+const fs = require('fs');
+const path = require('path');
+
+// Abre un WriteStream para product_insert.sql en la raíz
+const outputPath = path.resolve(__dirname, 'product_insertions.sql');
+const out = fs.createWriteStream(outputPath, { encoding: 'utf8' });
+
+// Una función auxiliar en lugar de console.log:
+function write(sql) {
+    out.write(sql + '\n');
+}
+
 // Genera INSERTs para tablas: productos, productovariantes, promociones, promocion_variantes
 // Incluye reglas para géneros, categorías, materiales, variantes y promociones aleatorias.
 
 const brands = [
-    { id: 1, name: 'Nike' },
+    { id: 1, name: 'Abercrombie & Fitch' },
     { id: 2, name: 'Adidas' },
-    { id: 3, name: 'Under Armour' },
-    { id: 4, name: 'Puma' },
+    { id: 3, name: 'American Eagle Outfitters' },
+    { id: 4, name: 'Calvin Klein' },
     { id: 5, name: 'Gap' },
-    { id: 6, name: 'Calvin Klein' },
-    { id: 7, name: 'American Eagle' },
-    { id: 8, name: 'Abercrombie' },
-    { id: 9, name: 'Lacoste' },
+    { id: 6, name: 'Hollister' },
+    { id: 7, name: 'Lacoste' },
+    { id: 8, name: 'Nike' },
+    { id: 9, name: 'Puma' },
+    { id: 10, name: 'Under Armour' },
+    { id: 11, name: 'Zara' },
 ];
 
+// 1) Categorías, ordenadas por id (tal como en tu CSV)
 const categories = [
     { id: 5, name: 'Musculosas', singular: 'Musculosa', priceRange: [35, 70] },
     { id: 6, name: 'Poleras', singular: 'Polera', priceRange: [40, 90] },
@@ -35,7 +51,7 @@ const categories = [
 
 // Géneros permitidos globalmente
 const genders = ['Hombre', 'Mujer', 'Niños', 'Unisex'];
-// Categorías femeninas
+// 2) Categorías femeninas (siguen siendo las mismas)
 const femaleCats = [8, 9, 12]; // Blusas, Vestidos, Faldas
 
 // Fechas de inicio y fin según temporada (hemisferio sur, Bolivia)
@@ -55,7 +71,7 @@ const colors = ['Rojo', 'Azul', 'Verde', 'Negro', 'Blanco', 'Amarillo', 'Morado'
 
 // Materiales y restricciones por categoría
 const generalMaterials = ['Nylon', 'Algodón', 'Poliéster', 'Seda', 'Lino', 'Mezclilla', 'Cuero'];
-// Materiales poco habituales o no indicados para cada categoría:
+// 3) Materiales poco habituales o no indicados para cada categoría:
 const bannedMaterials = {
     5: ['Seda', 'Lino', 'Cuero', 'Mezclilla'],           // Musculosa: prefieren algodón/poliéster/nylon
     6: ['Cuero', 'Mezclilla'],                           // Poleras: no cuero ni denim
@@ -68,13 +84,13 @@ const bannedMaterials = {
     13: ['Seda', 'Lino', 'Mezclilla'],                   // Parkas: requieren tejidos resistentes e impermeables
     14: ['Seda', 'Lino', 'Mezclilla'],                   // Chompas: punto grueso, no seda/linen/denim
     15: ['Seda', 'Lino', 'Mezclilla'],                   // Chamarras: necesitan tejidos robustos
-    16: ['Seda', 'Lino', 'Mezclilla', 'Cuero'],           // Sudaderas: prefieren algodón/poliéster/nylon
+    16: ['Seda', 'Lino', 'Mezclilla', 'Cuero'],          // Sudaderas: prefieren algodón/poliéster/nylon
     17: ['Seda', 'Lino', 'Mezclilla', 'Cuero'],          // Gorras: tejidos ligeros/cotton/poly usual
     18: ['Mezclilla', 'Cuero'],                          // Bufandas: suaves, no rígidos como denim/cuero
     19: ['Seda', 'Lino'],                                // Cinturones: requieren más estructura
     20: ['Seda', 'Lino', 'Mezclilla', 'Cuero'],          // Sombreros: de este listado solo quitamos lo común
 };
-// materiales exclusivos por categoría (no están en generalMaterials)
+// 4) materiales exclusivos por categoría (no están en generalMaterials)
 const exclusiveMaterials = {
     5: ['Lana'],                // Musculosa: tejido de lana
     8: ['Chifón'],              // Blusas: tejido ligero y transparente
@@ -114,15 +130,11 @@ function sample(arr, count) {
 }
 
 let prodId = 0;
-let varId = 0;
 let promoId = 0;
 
-const productVariantIds = {};
-const brandVariantIds = {};
-const categoryVariantIds = {};
-const productInfo = {};
-
 const promoMeta = {};
+const productInfo = {};
+const usedSkus = new Set();
 const seenPromos = { Categoria: new Set(), Marca: new Set(), Producto: new Set() };
 
 console.log('-- Productos');
@@ -149,7 +161,7 @@ categories.forEach(cat => {
                 gender: g,
                 name: name
             };
-            console.log(
+            write(
                 `INSERT INTO productos (Nombre,Genero,MarcaId,CategoriaId) ` +
                 `VALUES ('${name}','${g}',${b.id},${cat.id});`
             );
@@ -168,9 +180,7 @@ Object.entries(productInfo).forEach(([id, info]) => {
 
 console.log('\n-- Variantes');// 2) Generar variantes usando sku padded y precio uniforme:
 Object.entries(productInfo).forEach(([id, info]) => {
-    const cat = categories.find(c => c.id === info.catId);
     const catMats = materialsForCategory(info.catId);
-    productVariantIds[id] = [];
 
     const pattern = randInt(5);
     let selSizes, selColors;
@@ -182,23 +192,21 @@ Object.entries(productInfo).forEach(([id, info]) => {
         case 4: selSizes = sample(sizes, Math.ceil(sizes.length / 2)); selColors = colors; break;
     }
 
-    selSizes.forEach(sz => selColors.forEach(col => {
-        varId++;
-        productVariantIds[id].push(varId);
-        categoryVariantIds[info.catId].push(varId);
-        brandVariantIds[info.brandId] = brandVariantIds[info.brandId] || [];
-        brandVariantIds[info.brandId].push(varId);
-
+    selSizes.forEach(size => selColors.forEach(col => {        
         const idStr = id.toString().padStart(4, '0');
-        const colorCode = col.charAt(0).toUpperCase();
-        const sku = `SKU-${idStr}-${sz}-${colorCode}`;
+        const colorCode = col.slice(0,3).toUpperCase();
+        const sku = `SKU-P${idStr}-${size}-${colorCode}`;
+
+        if (usedSkus.has(sku)) return;  // o `continue` en lugar de `return` si estás en un forEach
+                
+        usedSkus.add(sku);
         const price = priceMap[id];
         const mat = pick(catMats);
 
-        console.log(
+        write(
             `INSERT INTO productovariantes ` +
             `(ProductoId,Color,Talla,Material,SKU,PrecioVenta,Cantidad) VALUES ` +
-            `(${id},'${col}','${sz}','${mat}','${sku}',${price},${randInt(20) + 1});`
+            `(${id},'${col}','${size}','${mat}','${sku}',${price},${randInt(20) + 1});`
         );
     }));
 });
@@ -252,9 +260,9 @@ Object.entries(productInfo).forEach(([id, info]) => {
     }
 
     // Insert en promociones
-    console.log(
+    write(
         `INSERT INTO promociones ` +
-        `(Titulo,DescuentoPct,FechaInicio,FechaFin,TipoPromo,TargetId,Cobertura,Genero) VALUES ` +
+        `(Titulo,Descuento,FechaInicio,FechaFin,TipoPromo,TargetId,Cobertura,Genero) VALUES ` +
         `('${titulo}',${pct},'${start}','${end}','${tipo}',${key},${cobertura.toFixed(2)},'${promoGenero}');`
     );
 
@@ -288,10 +296,14 @@ for (let pid = 1; pid <= promoId; pid++) {
 
     // 4) Insert detalle
     sel.forEach(prodId => {
-        console.log(
-            `INSERT INTO promocion_productos ` +
+        write(
+            `INSERT INTO promocionproductos ` +
             `(PromocionId,ProductoId) VALUES ` +
             `(${pid},${prodId});`
         );
     });
 }
+
+out.end(() => {
+    console.log(`✅ SQL volcado en ${outputPath}`);
+});
