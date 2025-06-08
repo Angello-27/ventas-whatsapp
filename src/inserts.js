@@ -192,13 +192,13 @@ Object.entries(productInfo).forEach(([id, info]) => {
         case 4: selSizes = sample(sizes, Math.ceil(sizes.length / 2)); selColors = colors; break;
     }
 
-    selSizes.forEach(size => selColors.forEach(col => {        
+    selSizes.forEach(size => selColors.forEach(col => {
         const idStr = id.toString().padStart(4, '0');
-        const colorCode = col.slice(0,3).toUpperCase();
+        const colorCode = col.slice(0, 3).toUpperCase();
         const sku = `SKU-P${idStr}-${size}-${colorCode}`;
 
         if (usedSkus.has(sku)) return;  // o `continue` en lugar de `return` si estás en un forEach
-                
+
         usedSkus.add(sku);
         const price = priceMap[id];
         const mat = pick(catMats);
@@ -214,11 +214,7 @@ Object.entries(productInfo).forEach(([id, info]) => {
 // Al generar cada promo:
 console.log('\n-- promociones');
 Object.entries(productInfo).forEach(([id, info]) => {
-    const pct = pick(discountOptions);
-    const season = pick(seasons);
-    const { start, end } = seasonDates[season];
-
-    // Elegir tipo y target
+    // 1) Tipo + target
     const tipo = pick(['Categoria', 'Marca', 'Producto']);
     const key = tipo === 'Categoria'
         ? info.catId
@@ -226,47 +222,72 @@ Object.entries(productInfo).forEach(([id, info]) => {
             ? info.brandId
             : Number(id);
 
-    // Evitar duplicados (opcional)
+    // 2) Evitar duplicados
     if (seenPromos[tipo].has(key)) return;
-
-    promoId++;
     seenPromos[tipo].add(key);
 
-    // Calcular cobertura sólo si no es producto
+    // 3) Determinar rango de géneros válidos para este target
+    let generoPool;
+    if ((tipo === 'Categoria') && femaleCats.includes(key)) {
+        generoPool = ['Mujer', 'Niños', 'Unisex'];
+    } else {
+        generoPool = genders;
+    }
+
+    // 4) Elegir género de la promo
+    const promoGenero = tipo === 'Producto'
+        ? info.gender
+        : pick(generoPool);
+
+    // 5) Calcular cobertura
     const cobertura = tipo === 'Producto'
         ? 1.00
         : pick([1, 0.5, 0.25, 0.33]);
 
-    // si es promo-producto, heredamos el género del producto
-    const promoGenero = tipo === 'Producto' ? info.gender : pick(genders);
+    // 6) Preparar sufijo de género (solo para Cat/Marca; Niños→Niña solo en categorías femeninas)
+    let displayGenero = promoGenero;
+    if (
+        tipo === 'Categoria' &&
+        promoGenero === 'Niños' &&
+        femaleCats.includes(key)
+    ) {
+        displayGenero = 'Niña';
+    }
 
     // ahora construimos el sufijo de género sólo para Marca/Categoría
     const genderSuffix =
         (promoGenero === 'Unisex' || tipo === 'Producto')
             ? ''
-            : ` para ${promoGenero}`;
+            : ` para ${displayGenero}`;  // <-- aquí usamos displayGenero, no promoGenero
 
-    // Construcción del título
+    // 7) Generar resto de datos aleatorios
+    const pct = pick(discountOptions);
+    const season = pick(seasons);
+    const { start, end } = seasonDates[season];
+
+    // 8) Construir título
     let titulo;
     if (tipo === 'Categoria') {
         const catName = categories.find(c => c.id === info.catId).name;
         titulo = `${pick(promoKeywords)} de ${catName}${genderSuffix} -${pct}%`;
-    } else if (tipo === 'Marca') {
+    }
+    else if (tipo === 'Marca') {
         const brandName = brands.find(b => b.id === info.brandId).name;
         titulo = `${pick(promoKeywords)} de ${season} en ${brandName}${genderSuffix} -${pct}%`;
-    } else { // Producto
-        // info.name ya lleva el género, y no ponemos sufijo
+    }
+    else { // Producto
         titulo = `${pick(promoKeywords)} en ${info.name} -${pct}%`;
     }
 
-    // Insert en promociones
+    // 9) Volcar INSERT
     write(
         `INSERT INTO promociones ` +
         `(Titulo,Descuento,FechaInicio,FechaFin,TipoPromo,TargetId,Cobertura,Genero) VALUES ` +
         `('${titulo}',${pct},'${start}','${end}','${tipo}',${key},${cobertura.toFixed(2)},'${promoGenero}');`
     );
 
-    // Y guardamos también en promoMeta:
+    // 10) Guardar para detalle
+    promoId++
     promoMeta[promoId] = { tipo, key, cobertura, genero: promoGenero };
 });
 
