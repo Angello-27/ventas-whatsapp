@@ -1,30 +1,27 @@
-// src/core/entities/Cliente.js
+// src/core/entities/ClienteInteres.js
 
-class Cliente {
+class ClienteInteres {
     /**
      * @param {Object} params
+     * @param {number} params.interesId
      * @param {number} params.clienteId
-     * @param {string} params.telefono
-     * @param {string|null} params.nombre
-     * @param {string|null} params.email
+     * @param {string} params.intereses
      * @param {Date|null} params.createdAt
      * @param {boolean} params.isActive
      */
     constructor({
+        interesId,
         clienteId,
-        telefono,
-        nombre = null,
-        email = null,
+        intereses,
         createdAt = null,
         isActive = true
     }) {
+        this.interesId = interesId;
         this.clienteId = clienteId;
-        this.telefono = telefono;
-        this.nombre = nombre;
-        this.email = email;
+        this.intereses = intereses;
         this.createdAt = createdAt;
         this.isActive = isActive;
     }
 }
 
-module.exports = Cliente;
+module.exports = ClienteInteres;
