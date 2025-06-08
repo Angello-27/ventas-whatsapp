@@ -12,6 +12,7 @@ class Producto {
      * @param {number} params.categoriaId
      * @param {string} params.categoriaNombre
      * @param {Date|null} params.createdAt
+     * @param {boolean} params.isActive
      */
     constructor({
         productoId,
@@ -22,7 +23,8 @@ class Producto {
         logoUrl,
         categoriaId,
         categoriaNombre,
-        createdAt = null
+        createdAt = null,
+        isActive = true
     }) {
         this.productoId = productoId;
         this.nombre = nombre;
@@ -33,6 +35,7 @@ class Producto {
         this.categoriaId = categoriaId;
         this.categoriaNombre = categoriaNombre;
         this.createdAt = createdAt;
+        this.isActive = isActive;
     }
 }
 

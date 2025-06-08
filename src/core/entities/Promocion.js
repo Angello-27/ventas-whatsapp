@@ -1,4 +1,4 @@
-// core/entities/Promocion.js
+// src/core/entities/Promocion.js
 
 class Promocion {
     /**
@@ -8,8 +8,12 @@ class Promocion {
      * @param {number} params.descuentoPct
      * @param {string|Date} params.fechaInicio   // YYYY-MM-DD o Date
      * @param {string|Date} params.fechaFin      // YYYY-MM-DD o Date
-     * @param {boolean} params.activa
+     * @param {'Categoria'|'Marca'|'Producto'} params.tipoPromo
+     * @param {number} params.targetId
+     * @param {number} params.cobertura
+     * @param {'Hombre'|'Mujer'|'Niños'|'Unisex'} params.genero
      * @param {Date|null} params.createdAt
+     * @param {boolean} params.isActive
      */
     constructor({
         promocionId,
@@ -17,16 +21,24 @@ class Promocion {
         descuentoPct,
         fechaInicio,
         fechaFin,
-        activa = true,
-        createdAt = null
+        tipoPromo,
+        targetId,
+        cobertura = 1.0,
+        genero = 'Unisex',
+        createdAt = null,
+        isActive = true
     }) {
         this.promocionId = promocionId;
         this.titulo = titulo;
         this.descuentoPct = descuentoPct;
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
-        this.activa = activa;
+        this.tipoPromo = tipoPromo;
+        this.targetId = targetId;
+        this.cobertura = cobertura;
+        this.genero = genero;
         this.createdAt = createdAt;
+        this.isActive = isActive;
     }
 }
 
