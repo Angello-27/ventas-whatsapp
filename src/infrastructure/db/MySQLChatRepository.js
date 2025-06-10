@@ -1,7 +1,7 @@
 // src/infrastructure/db/MySQLChatRepository.js
 const IChatRepository = require('../../core/repositories/IChatRepository'); //  Usar interfaz combinada
 const Cliente = require('../../core/entities/Cliente');
-const Sesion = require('../../core/entities/Sesion'); //  Cambiar de SesionChat a Sesion
+const Sesion = require('../../core/entities/Sesion');
 const Mensaje = require('../../core/entities/Mensaje');
 
 const pool = require('./mysqlPool');
@@ -68,42 +68,51 @@ class MySQLChatRepository extends IChatRepository {
 
     async findActiveByClienteId(clienteId) {
         const sql = `
-            SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, 
-                   ultimoContexto, isActive, createdAt
-            FROM sesiones
-            WHERE ClienteId = ? AND FinalizadoEn IS NULL AND isActive = 1
-            ORDER BY IniciadoEn DESC
-            LIMIT 1
-        `;
+        SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, 
+               UltimoContexto, IsActive, createdAt
+        FROM sesiones
+        WHERE ClienteId = ? AND FinalizadoEn IS NULL AND IsActive = 1
+        ORDER BY IniciadoEn DESC
+        LIMIT 1
+    `;
         const [rows] = await pool.query(sql, [clienteId]);
         if (!rows.length) return null;
 
         const r = rows[0];
-        return new Sesion({ // ✅ Usar Sesion en lugar de SesionChat
+        const sesion = new Sesion({
             sesionId: r.SesionId,
             clienteId: r.ClienteId,
             iniciadoEn: r.IniciadoEn,
             finalizadoEn: r.FinalizadoEn,
-            ultimoContexto: r.ultimoContexto, // ✅ Incluir contexto
-            isActive: Boolean(r.isActive),
+            ultimoContexto: r.UltimoContexto, // ✅ CORREGIDO: UltimoContexto (no ultimoContexto)
+            isActive: Boolean(r.IsActive),    // ✅ CORREGIDO: IsActive (no isActive)
             createdAt: r.createdAt
         });
+
+        console.log('📋 Sesión cargada:', {
+            sesionId: sesion.sesionId,
+            tieneContexto: sesion.hasContexto ? sesion.hasContexto() : false,
+            metodos: typeof sesion.setContexto === 'function' ? '✅' : '❌',
+            contextoRaw: r.UltimoContexto
+        });
+
+        return sesion;
     }
 
     async createSession({ clienteId }) {
         const sql = `
-            INSERT INTO sesiones (ClienteId, IniciadoEn, FinalizadoEn, ultimoContexto, createdAt, isActive)
-            VALUES (?, NOW(), NULL, NULL, NOW(), 1)
-        `;
+        INSERT INTO sesiones (ClienteId, IniciadoEn, FinalizadoEn, UltimoContexto, createdAt, IsActive)
+        VALUES (?, NOW(), NULL, NULL, NOW(), 1)
+    `;
         const [result] = await pool.query(sql, [clienteId]);
         const insertId = result.insertId;
 
         const [rows] = await pool.query(
             `SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, 
-                    ultimoContexto, isActive, createdAt
-             FROM sesiones
-             WHERE SesionId = ?
-             LIMIT 1`,
+                UltimoContexto, IsActive, createdAt
+         FROM sesiones
+         WHERE SesionId = ?
+         LIMIT 1`,
             [insertId]
         );
         const r = rows[0];
@@ -112,8 +121,8 @@ class MySQLChatRepository extends IChatRepository {
             clienteId: r.ClienteId,
             iniciadoEn: r.IniciadoEn,
             finalizadoEn: r.FinalizadoEn,
-            ultimoContexto: r.ultimoContexto,
-            isActive: Boolean(r.isActive),
+            ultimoContexto: r.UltimoContexto, // ✅ CORREGIDO
+            isActive: Boolean(r.IsActive),    // ✅ CORREGIDO
             createdAt: r.createdAt
         });
     }
@@ -132,24 +141,24 @@ class MySQLChatRepository extends IChatRepository {
     async updateSessionContext(sesionId, contextObj) {
         const json = JSON.stringify(contextObj);
         const sql = `
-            UPDATE sesiones 
-            SET ultimoContexto = ? 
-            WHERE SesionId = ?
+        UPDATE sesiones 
+        SET UltimoContexto = ? 
+        WHERE SesionId = ?
         `;
         await pool.query(sql, [json, sesionId]);
     }
 
     async getSessionContext(sesionId) {
         const sql = `
-            SELECT ultimoContexto 
-            FROM sesiones 
-            WHERE SesionId = ?
+        SELECT UltimoContexto 
+        FROM sesiones 
+        WHERE SesionId = ?
         `;
         const [rows] = await pool.query(sql, [sesionId]);
-        if (!rows.length || !rows[0].ultimoContexto) return null;
+        if (!rows.length || !rows[0].UltimoContexto) return null;
 
         try {
-            return JSON.parse(rows[0].ultimoContexto);
+            return JSON.parse(rows[0].UltimoContexto);
         } catch (err) {
             console.warn('Error parsing session context:', err);
             return null;

@@ -19,12 +19,13 @@ const MysqlProductoRepository = require('../db/MysqlProductoRepository');
 const MysqlVarianteRepository = require('../db/MysqlProductoVarianteRepository');
 const MysqlPromocionRepository = require('../db/MysqlPromocionRepository');
 const MysqlPromocionProductoRepository = require('../db/MysqlPromocionProductoRepository');
+const MySQLChatRepository = require('../db/MySQLChatRepository'); // ✅ NUEVO: Repositorio de chat
 
 // — Pinecone (vectorial) Repositorios —
-//const PineconeProductoRepository = require('../vector/PineconeProductoRepository');
+const PineconeProductoRepository = require('../vector/PineconeProductoRepository');
 const PineconeVarianteRepository = require('../vector/PineconeVarianteRepository');
-//const PineconePromocionRepository = require('../vector/PineconePromocionRepository');
-//const PineconePromocionProductoRepository = require('../vector/PineconePromocionProductoRepository');
+const PineconePromocionRepository = require('../vector/PineconePromocionRepository');
+const PineconePromocionProductoRepository = require('../vector/PineconePromocionProductoRepository');
 
 function buildDeps() {
     // 1) Cliente de chat (OpenAI Chat)
@@ -39,23 +40,30 @@ function buildDeps() {
         model: embedModel
     });
 
-    // 3) Instanciamos repositorios MySQL (vistas planas)
+    // 3) Instanciamos repositorios MySQL (vistas planas + chat)
     const mysqlRepos = {
         productoRepo: new MysqlProductoRepository(),
         varianteRepo: new MysqlVarianteRepository(),
         promocionRepo: new MysqlPromocionRepository(),
-        promocionProductoRepo: new MysqlPromocionProductoRepository()
+        promocionProductoRepo: new MysqlPromocionProductoRepository(),
+        chatRepo: new MySQLChatRepository() // ✅ NUEVO: Repositorio para conversaciones
         // … agregar otros repositorios MySQL según necesidad …
     };
 
     // 4) Instanciamos repositorios Pinecone (vectorial)
     const pineconeRepos = {
-        //pinePromocionProductoRepo: new PineconePromocionProductoRepository(pineconeClientPromise, embedClient),
-        //pinePromocionRepo: new PineconePromocionRepository(pineconeClientPromise, embedClient),
-        //pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient),
+        pinePromocionProductoRepo: new PineconePromocionProductoRepository(pineconeClientPromise, embedClient),
+        pinePromocionRepo: new PineconePromocionRepository(pineconeClientPromise, embedClient),
+        pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient),
         pineVarianteRepo: new PineconeVarianteRepository(pineconeClientPromise, embedClient),
         // … agregar otros repositorios Pinecone según necesidad …
     };
+
+    // 5) Logging para verificar que todo se instanció correctamente
+    console.log('🔧 Dependencias construidas:');
+    console.log(`   → MySQL Repos: ${Object.keys(mysqlRepos).length} instancias`);
+    console.log(`   → Pinecone Repos: ${Object.keys(pineconeRepos).length} instancias`);
+    console.log(`   → OpenAI Clients: chat (${chatModel}) + embeddings (${embedModel})`);
 
     return {
         repos: {
