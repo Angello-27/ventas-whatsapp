@@ -52,10 +52,10 @@ function buildDeps() {
 
     // 4) Instanciamos repositorios Pinecone (vectorial)
     const pineconeRepos = {
-        pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient),
-        pineVarianteRepo: new PineconeVarianteRepository(pineconeClientPromise, embedClient),
+        pinePromocionProductoRepo: new PineconePromocionProductoRepository(pineconeClientPromise, embedClient),
         pinePromocionRepo: new PineconePromocionRepository(pineconeClientPromise, embedClient),
-        pinePromocionProductoRepo: new PineconePromocionProductoRepository(pineconeClientPromise, embedClient)
+        pineVarianteRepo: new PineconeVarianteRepository(pineconeClientPromise, embedClient),
+        pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient)
         // … agregar otros repositorios Pinecone según necesidad …
     };
 

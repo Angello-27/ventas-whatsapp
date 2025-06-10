@@ -1,14 +1,17 @@
 // src/infrastructure/vector/PineconeProductoRepository.js
 const pLimit = require('p-limit');
-const limit = pLimit(2);           // sólo 2 embeddings a la vez
-const BATCH_SIZE = 50;
+const limit = pLimit(2);           // máximo 2 embeddings concurrentes
+const BATCH_SIZE = 50;              // tamaño de lote para upsert
+
+const pineconeConfig = require('../../config/pineconeConfig');
+const MysqlProductoRepository = require('../db/MysqlProductoRepository');
 
 class PineconeProductoRepository {
     constructor(pineconePromise, embedClient) {
         this.alreadySynced = false;
         this.pineconePromise = pineconePromise;
         this.embedClient = embedClient;
-        this.namespace = 'productos'; 
+        this.namespace = 'productos';
     }
 
     async needsSync() {

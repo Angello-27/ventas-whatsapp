@@ -1,7 +1,7 @@
 // src/infrastructure/vector/PineconeVarianteRepository.js
 const pLimit = require('p-limit');
-const limit = pLimit(2);
-const BATCH_SIZE = 50;
+const limit = pLimit(2);           // máximo 2 embeddings concurrentes
+const BATCH_SIZE = 50;              // tamaño de lote para upsert
 
 const pineconeConfig = require('../../config/pineconeConfig');
 const MysqlVarianteRepository = require('../db/MysqlProductoVarianteRepository');
@@ -82,7 +82,7 @@ class PineconeVarianteRepository {
         console.log(`   → [${this.namespace}] Subiendo ${totalBatches} lotes…`);
         for (let i = 0; i < totalBatches; i++) {
             const batch = vectors.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-            console.log(`     · Lote ${i + 1}/${totalBatches} (${batch.length} vectores)`);
+            console.log(`     · [${this.namespace}] Lote ${i + 1}/${totalBatches} (${batch.length} vectores)`);
             try {
                 await index.upsert(batch, { namespace: this.namespace });
             } catch (err) {
@@ -94,7 +94,30 @@ class PineconeVarianteRepository {
         console.log(`✅ [${this.namespace}] syncAllToVectorDB completado.`);
     }
 
-    // ... semanticSearch igual, pasando { namespace: this.namespace } …
+    async semanticSearch(queryText, topK = 3) {
+        console.log(`❓ [${this.namespace}] semanticSearch query="${queryText}" topK=${topK}`);
+        const { data } = await this.embedClient.embedText(queryText);
+        const client = await this.pineconePromise;
+        const index = client.Index(pineconeConfig.indexName);
+
+        const result = await index.query(
+            { topK, vector: data[0].embedding, includeMetadata: true },
+            { namespace: this.namespace }
+        );
+        return result.matches.map(m => ({
+            variante: {
+                varianteId: parseInt(m.id, 10),
+                sku: m.metadata.sku,
+                productoNombre: m.metadata.productoNombre,
+                color: m.metadata.color,
+                talla: m.metadata.talla,
+                material: m.metadata.material,
+                precioVenta: m.metadata.precioVenta,
+                cantidad: m.metadata.cantidad
+            },
+            score: m.score
+        }));
+    }
 }
 
 module.exports = PineconeVarianteRepository;
