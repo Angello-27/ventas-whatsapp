@@ -22,7 +22,7 @@ class PineconeProductoRepository {
         }
 
         const client = await this.pineconePromise;
-        const index = client.Index(pineconeConfig.indexName);
+        const index = client.index(pineconeConfig.indexName);
 
         try {
             const stats = await index.describeIndexStats({
@@ -43,7 +43,7 @@ class PineconeProductoRepository {
     async syncAllToVectorDB() {
         console.log(`🚀 [${this.namespace}] Iniciando syncAllToVectorDB…`);
         const client = await this.pineconePromise;
-        const index = client.Index(pineconeConfig.indexName);
+        const index = client.index(pineconeConfig.indexName);
 
         // 1) Obtener datos de MySQL
         const items = await new MysqlProductoRepository().findAllActive();
@@ -83,10 +83,10 @@ class PineconeProductoRepository {
             const batch = vectors.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
             console.log(`     · [${this.namespace}] Lote ${i + 1}/${totalBatches} (${batch.length} vectores)`);
             try {
-                await index.upsert({
-                    vectors: batch,
-                    namespace: this.namespace
-                });
+                // Intento 1: Usar namespace() method (documentación oficial)
+                const namespacedIndex = index.namespace(this.namespace);
+                const response = await namespacedIndex.upsert(batch);  // ✅ FIX: Declarar 'const response'
+                console.log(`     ✅ Lote ${i + 1} completado`);
             } catch (err) {
                 console.error(`❌ [${this.namespace}] Error upsert lote ${i + 1}: ${err.message}`);
             }
@@ -100,7 +100,7 @@ class PineconeProductoRepository {
         console.log(`❓ [${this.namespace}] semanticSearch query="${queryText}" topK=${topK}`);
         const { data } = await this.embedClient.embedText(queryText);
         const client = await this.pineconePromise;
-        const index = client.Index(pineconeConfig.indexName);
+        const index = client.index(pineconeConfig.indexName);
 
         const result = await index.query(
             { topK, vector: data[0].embedding, includeMetadata: true },
