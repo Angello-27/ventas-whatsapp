@@ -1,5 +1,5 @@
 // src/infrastructure/vector/PineconePromocionRepository.js
-const pLimit = require('p-limit');
+const pLimit = require('p-limit').default; // cargar default para ESM-only p-limit
 const limit = pLimit(2);           // máximo 2 embeddings concurrentes
 const BATCH_SIZE = 50;              // tamaño de lote para upsert
 

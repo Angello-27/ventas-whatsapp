@@ -1,5 +1,5 @@
 // src/infrastructure/vector/PineconePromocionProductoRepository.js
-const pLimit = require('p-limit');
+const pLimit = require('p-limit').default; // cargar default para ESM-only p-limit
 const limit = pLimit(2);
 const BATCH_SIZE = 50;
 

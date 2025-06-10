@@ -1,5 +1,5 @@
 // src/infrastructure/vector/PineconeProductoRepository.js
-const pLimit = require('p-limit');
+const pLimit = require('p-limit').default; // cargar default para ESM-only p-limit
 const limit = pLimit(2);           // máximo 2 embeddings concurrentes
 const BATCH_SIZE = 50;              // tamaño de lote para upsert
 
@@ -80,8 +80,7 @@ class PineconeProductoRepository {
         const totalBatches = Math.ceil(vectors.length / BATCH_SIZE);
         console.log(`   → [${this.namespace}] Subiendo ${totalBatches} lotes de hasta ${BATCH_SIZE} vectores…`);
         for (let i = 0; i < totalBatches; i++) {
-            const start = i * BATCH_SIZE;
-            const batch = vectors.slice(start, start + BATCH_SIZE);
+            const batch = vectors.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
             console.log(`     · [${this.namespace}] Lote ${i + 1}/${totalBatches} (${batch.length} vectores)`);
             try {
                 await index.upsert(batch, { namespace: this.namespace });
