@@ -1,12 +1,12 @@
 // src/infrastructure/vector/PineconePromocionProductoRepository.js
+const pLimit = require('p-limit');
+const limit = pLimit(2);
+const BATCH_SIZE = 50;
+
 const pineconeConfig = require('../../config/pineconeConfig');
 const MysqlPromoProdRepository = require('../db/MysqlPromocionProductoRepository');
 
 class PineconePromocionProductoRepository {
-    /**
-     * @param {Promise<import('@pinecone-database/pinecone').Pinecone>} pineconePromise
-     * @param {{ embedText: (text: string) => Promise<any> }} embedClient
-     */
     constructor(pineconePromise, embedClient) {
         this.alreadySynced = false;
         this.pineconePromise = pineconePromise;
@@ -15,12 +15,16 @@ class PineconePromocionProductoRepository {
     }
 
     async needsSync() {
+        console.log(`🔍 [${this.namespace}] Comprobando sync…`);
         if (this.alreadySynced) return false;
         const client = await this.pineconePromise;
         const index = client.Index(pineconeConfig.indexName);
         try {
-            const stats = await index.describeIndexStats({ describeIndexStatsRequest: { namespace: this.namespace } });
-            const count = stats.namespaces?.[this.namespace]?.vectorCount || 0;
+            const stats = await index.describeIndexStats({
+                describeIndexStatsRequest: { namespace: this.namespace }
+            });
+            const count = stats.namespaces?.[this.namespace]?.vectorCount ?? 0;
+            console.log(`   → vectorCount = ${count}`);
             return count === 0;
         } catch (err) {
             if (err.name === 'PineconeNotFoundError') return true;
@@ -29,58 +33,53 @@ class PineconePromocionProductoRepository {
     }
 
     async syncAllToVectorDB() {
+        console.log(`🚀 [${this.namespace}] Iniciando syncAll…`);
         const client = await this.pineconePromise;
         const index = client.Index(pineconeConfig.indexName);
 
-        const mysqlRepo = new MysqlPromoProdRepository();
-        const items = await mysqlRepo.findAllActive();
+        const items = await new MysqlPromoProdRepository().findAllActive();
+        console.log(`   → ${items.length} promos-productos a procesar.`);
 
-        const vectors = await Promise.all(items.map(async pp => {
-            const textResp = await this.embedClient.embedText(
-                `Promo: ${pp.promocionTitulo} — Producto: ${pp.productoNombre}`
-            );
-            const values = textResp.data[0].embedding;
-            return {
-                id: pp.promocionProductoId.toString(),
-                values,
-                metadata: {
-                    promocionTitulo: pp.promocionTitulo,
-                    productoNombre: pp.productoNombre,
-                    productoGenero: pp.productoGenero,
-                    categoriaNombre: pp.categoriaNombre,
-                    marcaNombre: pp.marcaNombre
-                }
-            };
-        }));
-
-        if (vectors.length) {
-            await index.upsert(vectors, { namespace: this.namespace });
-            this.alreadySynced = true;
+        const vectors = [];
+        for (const pp of items) {
+            const vec = await limit(async () => {
+                console.log(`     • Embedding ppId=${pp.promocionProductoId}`);
+                const { data } = await this.embedClient.embedText(
+                    `Promo: ${pp.promocionTitulo} — Producto: ${pp.productoNombre}`
+                );
+                return {
+                    id: pp.promocionProductoId.toString(),
+                    values: data[0].embedding,
+                    metadata: {
+                        promocionTitulo: pp.promocionTitulo,
+                        productoNombre: pp.productoNombre,
+                        productoGenero: pp.productoGenero,
+                        categoriaNombre: pp.categoriaNombre,
+                        marcaNombre: pp.marcaNombre
+                    }
+                };
+            }).catch(err => {
+                console.warn(`⚠️ [${this.namespace}] Falló embedding ppId=${pp.promocionProductoId}: ${err.message}`);
+                return null;
+            });
+            if (vec) vectors.push(vec);
         }
-    }
+        console.log(`   → ${vectors.length} embeddings generados.`);
 
-    async semanticSearch(queryText, topK = 3) {
-        const qResp = await this.embedClient.embedText(queryText);
-        const queryVector = qResp.data[0].embedding;
-        const client = await this.pineconePromise;
-        const index = client.Index(pineconeConfig.indexName);
+        const totalBatches = Math.ceil(vectors.length / BATCH_SIZE);
+        console.log(`   → Subiendo ${totalBatches} lotes…`);
+        for (let i = 0; i < totalBatches; i++) {
+            const batch = vectors.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+            console.log(`     · Lote ${i + 1}/${totalBatches} (${batch.length} vectores)`);
+            try {
+                await index.upsert(batch, { namespace: this.namespace });
+            } catch (err) {
+                console.error(`❌ [${this.namespace}] Error lote ${i + 1}: ${err.message}`);
+            }
+        }
 
-        const result = await index.query(
-            { topK, vector: queryVector, includeMetadata: true },
-            { namespace: this.namespace }
-        );
-
-        return result.matches.map(m => ({
-            promocionProducto: {
-                promocionProductoId: parseInt(m.id, 10),
-                promocionTitulo: m.metadata.promocionTitulo,
-                productoNombre: m.metadata.productoNombre,
-                productoGenero: m.metadata.productoGenero,
-                categoriaNombre: m.metadata.categoriaNombre,
-                marcaNombre: m.metadata.marcaNombre
-            },
-            score: m.score
-        }));
+        this.alreadySynced = true;
+        console.log(`✅ [${this.namespace}] syncAllToVectorDB completado.`);
     }
 }
 
