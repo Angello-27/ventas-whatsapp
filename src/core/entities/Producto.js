@@ -1,5 +1,4 @@
 // src/core/entities/Producto.js
-
 class Producto {
     /**
      * @param {Object} params
@@ -8,11 +7,9 @@ class Producto {
      * @param {'Hombre'|'Mujer'|'Niños'|'Unisex'} params.genero
      * @param {number} params.marcaId
      * @param {string} params.marcaNombre
-     * @param {string} params.logoUrl
      * @param {number} params.categoriaId
      * @param {string} params.categoriaNombre
-     * @param {Date|null} params.createdAt
-     * @param {boolean} params.isActive
+     * @param {Date|string|null} params.asignadoEn    // alias de createdAt en la vista
      */
     constructor({
         productoId,
@@ -20,22 +17,18 @@ class Producto {
         genero,
         marcaId,
         marcaNombre,
-        logoUrl,
         categoriaId,
         categoriaNombre,
-        createdAt = null,
-        isActive = true
+        asignadoEn = null
     }) {
         this.productoId = productoId;
         this.nombre = nombre;
         this.genero = genero;
         this.marcaId = marcaId;
         this.marcaNombre = marcaNombre;
-        this.logoUrl = logoUrl;
         this.categoriaId = categoriaId;
         this.categoriaNombre = categoriaNombre;
-        this.createdAt = createdAt;
-        this.isActive = isActive;
+        this.asignadoEn = asignadoEn instanceof Date ? asignadoEn : asignadoEn && new Date(asignadoEn);
     }
 }
 

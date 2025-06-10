@@ -1,26 +1,37 @@
 // src/core/entities/PromocionProducto.js
-
 class PromocionProducto {
     /**
      * @param {Object} params
-     * @param {number} params.promocionProductoId
+     * @param {number} params.id                   // alias de PromocionProductoId en la vista
      * @param {number} params.promocionId
+     * @param {string} params.promocionTitulo
      * @param {number} params.productoId
-     * @param {Date|null} params.createdAt
-     * @param {boolean} params.isActive
+     * @param {string} params.productoNombre
+     * @param {string} params.productoGenero
+     * @param {string} params.categoriaNombre
+     * @param {string} params.marcaNombre
+     * @param {Date|string|null} params.asignadoEn // alias de createdAt en la vista
      */
     constructor({
-        promocionProductoId,
+        id,
         promocionId,
+        promocionTitulo,
         productoId,
-        createdAt = null,
-        isActive = true
+        productoNombre,
+        productoGenero,
+        categoriaNombre,
+        marcaNombre,
+        asignadoEn = null
     }) {
-        this.promocionProductoId = promocionProductoId;
+        this.promocionProductoId = id;
         this.promocionId = promocionId;
+        this.promocionTitulo = promocionTitulo;
         this.productoId = productoId;
-        this.createdAt = createdAt;
-        this.isActive = isActive;
+        this.productoNombre = productoNombre;
+        this.productoGenero = productoGenero;
+        this.categoriaNombre = categoriaNombre;
+        this.marcaNombre = marcaNombre;
+        this.asignadoEn = asignadoEn instanceof Date ? asignadoEn : asignadoEn && new Date(asignadoEn);
     }
 }
 

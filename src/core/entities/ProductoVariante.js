@@ -1,41 +1,40 @@
 // src/core/entities/ProductoVariante.js
-
 class ProductoVariante {
     /**
      * @param {Object} params
      * @param {number} params.varianteId
+     * @param {string} params.sku
      * @param {number} params.productoId
+     * @param {string} params.productoNombre
      * @param {string} params.color
      * @param {string} params.talla
      * @param {string|null} params.material
-     * @param {string} params.sku
      * @param {number} params.precioVenta
      * @param {number} params.cantidad
-     * @param {Date|null} params.createdAt
-     * @param {boolean} params.isActive
+     * @param {Date|string|null} params.asignadoEn    // alias de createdAt en la vista
      */
     constructor({
         varianteId,
+        sku,
         productoId,
+        productoNombre,
         color,
         talla,
         material = null,
-        sku,
         precioVenta,
         cantidad,
-        createdAt = null,
-        isActive = true
+        asignadoEn = null
     }) {
         this.varianteId = varianteId;
+        this.sku = sku;
         this.productoId = productoId;
+        this.productoNombre = productoNombre;
         this.color = color;
         this.talla = talla;
         this.material = material;
-        this.sku = sku;
         this.precioVenta = precioVenta;
         this.cantidad = cantidad;
-        this.createdAt = createdAt;
-        this.isActive = isActive;
+        this.asignadoEn = asignadoEn instanceof Date ? asignadoEn : asignadoEn && new Date(asignadoEn);
     }
 }
 

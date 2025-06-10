@@ -1,44 +1,43 @@
 // src/core/entities/Promocion.js
-
 class Promocion {
     /**
      * @param {Object} params
      * @param {number} params.promocionId
      * @param {string} params.titulo
-     * @param {number} params.descuentoPct
-     * @param {string|Date} params.fechaInicio   // YYYY-MM-DD o Date
-     * @param {string|Date} params.fechaFin      // YYYY-MM-DD o Date
+     * @param {number} params.descuento          // porcentaje de descuento
+     * @param {Date|string} params.fechaInicio
+     * @param {Date|string} params.fechaFin
      * @param {'Categoria'|'Marca'|'Producto'} params.tipoPromo
      * @param {number} params.targetId
+     * @param {string} params.targetNombre
      * @param {number} params.cobertura
      * @param {'Hombre'|'Mujer'|'Niños'|'Unisex'} params.genero
-     * @param {Date|null} params.createdAt
-     * @param {boolean} params.isActive
+     * @param {Date|string|null} params.asignadoEn  // alias de createdAt en la vista
      */
     constructor({
         promocionId,
         titulo,
-        descuentoPct,
+        descuento,
         fechaInicio,
         fechaFin,
         tipoPromo,
         targetId,
-        cobertura = 1.0,
-        genero = 'Unisex',
-        createdAt = null,
-        isActive = true
+        targetNombre,
+        cobertura,
+        genero,
+        asignadoEn = null
     }) {
         this.promocionId = promocionId;
         this.titulo = titulo;
-        this.descuentoPct = descuentoPct;
-        this.fechaInicio = fechaInicio;
-        this.fechaFin = fechaFin;
+        this.descuento = descuento;
+        this.fechaInicio = fechaInicio instanceof Date ? fechaInicio : new Date(fechaInicio);
+        this.fechaFin = fechaFin instanceof Date ? fechaFin : new Date(fechaFin);
         this.tipoPromo = tipoPromo;
         this.targetId = targetId;
+        this.targetNombre = targetNombre;
         this.cobertura = cobertura;
         this.genero = genero;
-        this.createdAt = createdAt;
-        this.isActive = isActive;
+        this.asignadoEn = asignadoEn instanceof Date ? asignadoEn : asignadoEn && new Date(asignadoEn);
     }
 }
 
