@@ -1,11 +1,11 @@
 // src/core/usecases/handleIncomingMessage.js
 
 const { buildSystemChatPrompt } = require('../../infrastructure/openai/prompts/baseChatPrompt');
-const { buildUserChatPrompt }   = require('../../infrastructure/openai/prompts/userChatPrompt');
+const { buildUserChatPrompt } = require('../../infrastructure/openai/prompts/userChatPrompt');
 
-const FollowUpDetectionService    = require('./services/followUpDetectionService');
-const ContextualSearchService     = require('./services/contextualSearchService');
-const MainSearchService           = require('./services/mainSearchService');
+const FollowUpDetectionService = require('./services/followUpDetectionService');
+const ContextualSearchService = require('./services/contextualSearchService');
+const MainSearchService = require('./services/mainSearchService');
 
 /**
  * Procesador de seguimientos contextuales
@@ -33,10 +33,65 @@ class FollowUpProcessor {
         return this.contextualSearch.getPricesFromContext(contextItems);
       case 'extend':
         return this.contextualSearch.extendSearch(followUp.query, contextItems);
+
+      // ✅ NUEVO: Agregar caso para promociones
+      case 'promotions':
+        return this.getPromotionsFromContext(contextItems);
+
       default:
         console.warn(`⚠️ Follow-up type no manejado: ${followUp.type}`);
         return 'Lo siento, no entendí tu solicitud de seguimiento.';
     }
+  }
+
+  /**
+   * Extrae y formatea las promociones del contexto actual
+   * @param {Array} contextItems - Items del contexto actual
+   * @returns {string} - Texto formateado con las promociones disponibles
+   */
+  getPromotionsFromContext(contextItems) {
+    console.log(`🎉 Extrayendo promociones del contexto (${contextItems.length} items)`);
+
+    // Filtrar promociones y productos en promoción
+    const promotions = contextItems.filter(item => item.type === 'promotion');
+    const promoProducts = contextItems.filter(item => item.type === 'promoProduct');
+
+    if (promotions.length === 0 && promoProducts.length === 0) {
+      return 'No encontré promociones activas en los productos que te mostré anteriormente.';
+    }
+
+    let result = '';
+
+    // Mostrar promociones generales
+    if (promotions.length > 0) {
+      result += '*🎉 Promociones activas:*\n';
+      promotions.forEach(item => {
+        const promo = item.promocion;
+        const descuentoNum = typeof promo.descuento === 'string'
+          ? parseFloat(promo.descuento)
+          : promo.descuento;
+
+        const descuentoText = promo.tipoPromo === 'Porcentaje'
+          ? `${descuentoNum}% OFF`
+          : `$${isNaN(descuentoNum) ? 'N/A' : descuentoNum.toFixed(2)} de descuento`;
+
+        result += `• ${promo.titulo} - ${descuentoText}\n`;
+        result += `  📅 Válida hasta: ${new Date(promo.fechaFin).toLocaleDateString()}\n`;
+      });
+    }
+
+    // Mostrar productos específicos en promoción
+    if (promoProducts.length > 0) {
+      if (result) result += '\n';
+      result += '*🏷️ Productos en promoción:*\n';
+      promoProducts.forEach(item => {
+        const pp = item.promocionProducto;
+        result += `• ${pp.productoNombre} (${pp.marcaNombre})\n`;
+        result += `  🎁 Promoción: ${pp.promocionTitulo}\n`;
+      });
+    }
+
+    return result.trim();
   }
 }
 
@@ -83,11 +138,11 @@ class SessionContextManager {
  */
 class MessageProcessor {
   constructor(repos) {
-    this.repos            = repos;
+    this.repos = repos;
     this.followUpDetector = new FollowUpDetectionService();
-    this.followUpProc     = new FollowUpProcessor(repos);
-    this.mainSearch       = new MainSearchService(repos);
-    this.contextManager   = new SessionContextManager(repos);
+    this.followUpProc = new FollowUpProcessor(repos);
+    this.mainSearch = new MainSearchService(repos);
+    this.contextManager = new SessionContextManager(repos);
   }
 
   /**
@@ -121,14 +176,14 @@ class MessageProcessor {
     // 3) Si es follow-up válido y hay contexto previo
     if (followUp.isFollowUp && context && context.lastItems.length) {
       searchResultText = await this.followUpProc.process(followUp, context.lastItems);
-      newContext       = context; // mantenemos el mismo contexto
+      newContext = context; // mantenemos el mismo contexto
     } else {
       // 4) Búsqueda normal: obtiene { text, items }
       console.log('🔎 Realizando búsqueda principal');
       const { text, items } = await this.mainSearch.performSearch(body);
       searchResultText = text;
       newContext = {
-        lastType:  'search',
+        lastType: 'search',
         lastQuery: body,
         lastItems: items,
         timestamp: new Date().toISOString()
@@ -140,7 +195,7 @@ class MessageProcessor {
 
     // 6) Construir y enviar a OpenAI
     const systemPrompt = buildSystemChatPrompt();
-    const userPrompt   = buildUserChatPrompt({ from, body });
+    const userPrompt = buildUserChatPrompt({ from, body });
     console.log('🤖 Enviando a OpenAI...');
     const reply = await chatClient.chat({
       systemPrompt,
