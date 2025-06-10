@@ -26,7 +26,12 @@ async function searchProductVariants(body, repos, topK = 3) {
   const lines = semResults.map(r => {
     const { variante, score } = r;
     const { sku, productoNombre, color, talla, precioVenta } = variante;
-    return `• ${sku} – ${productoNombre} (Color: ${color}, Talla: ${talla}) — Precio: ${precioVenta.toFixed(2)} — score: ${score.toFixed(2)}`;
+
+    // ✅ FIX: Convertir precioVenta a número antes de usar toFixed
+    const precio = typeof precioVenta === 'string' ? parseFloat(precioVenta) : precioVenta;
+    const precioFormateado = isNaN(precio) ? 'N/A' : precio.toFixed(2);
+
+    return `• ${sku} – ${productoNombre} (Color: ${color}, Talla: ${talla}) — Precio: $${precioFormateado} — score: ${score.toFixed(2)}`;
   });
 
   return {
