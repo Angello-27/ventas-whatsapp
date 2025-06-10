@@ -9,7 +9,7 @@ function expandSearchTerms(text) {
   const synonymMap = {
     // Pantalones
     'jeans': 'pantalón jeans',
-    'jean': 'pantalón jean',
+    'jean': 'pantalón',
     'vaqueros': 'pantalón vaquero',
     'mezclilla': 'pantalón mezclilla',
     'denim': 'pantalón denim',
