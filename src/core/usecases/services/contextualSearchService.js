@@ -76,7 +76,7 @@ ${sizes.map(s => `• ${s}`).join('\n')}`;
       if (item.type === 'product') {
         return `${idx + 1}. *${item.producto.nombre}* (Marca: ${item.producto.marcaNombre}) - Consultar variantes para precios específicos`;
       } else if (item.type === 'variant') {
-        return `${idx + 1}. *${item.variante.productoNombre}* (${item.variante.color}, ${item.variante.talla}) — *$${item.variante.precioVenta.toFixed(2)}*`;
+        return `${idx + 1}. *${item.variante.productoNombre}* (${item.variante.color}, ${item.variante.talla}) — *$${item.variante.precioVenta}*`;
       }
       return `${idx + 1}. Item sin información de precio`;
     });
