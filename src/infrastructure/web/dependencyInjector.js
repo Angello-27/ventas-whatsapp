@@ -2,66 +2,72 @@
 
 /**
  * Instancia todas las implementaciones concretas de repositorios
- * (MySQL + Pinecone), y exporta en un solo objeto `repos`. También
- * crea el cliente de OpenAI y expone esa misma instancia para compartirla.
+ * (MySQL + Pinecone), y exporta en un solo objeto `repos`.
+ * También crea el cliente de OpenAI para chat y embeddings,
+ * y expone esa misma instancia para compartirla.
  */
 
-// 1) Importamos la promesa que al resolver nos da la instancia de Pinecone
-const pineconeClientPromise = require('../vector/PineconeClient');;
+// 1) Promesa de cliente Pinecone inicializado
+const pineconeClientPromise = require('../vector/PineconeClient');
 
+// 2) Configuración de OpenAI
 const { apiKey, chatModel, embedModel } = require('../../config/openaiConfig');
-
 const OpenAIClient = require('../openai/OpenAIClient');
 
 // — MySQL Repositorios —
 const MysqlProductoRepository = require('../db/MysqlProductoRepository');
-const MysqlVarianteRepository = require('../db/MysqlVarianteRepository');
-// Importamos el repositorio unificado de Chat (cliente/sesión/mensajes)
+const MysqlVarianteRepository = require('../db/MysqlProductoVarianteRepository');
+const MysqlPromocionRepository = require('../db/MysqlPromocionRepository');
+const MysqlPromocionProductoRepository = require('../db/MysqlPromocionProductoRepository');
 const MySQLChatRepository = require('../db/MySQLChatRepository');
 
 // — Pinecone (vectorial) Repositorios —
 const PineconeProductoRepository = require('../vector/PineconeProductoRepository');
 const PineconeVarianteRepository = require('../vector/PineconeVarianteRepository');
-// …otros repositorios MySQL y Pinecone…
-
+const PineconePromocionRepository = require('../vector/PineconePromocionRepository');
+const PineconePromocionProductoRepository = require('../vector/PineconePromocionProductoRepository');
 
 function buildDeps() {
-    // 1) Creamos UNA sola instancia de OpenAIClient para chat:
+    // 1) Cliente de chat (OpenAI Chat)
     const chatClient = new OpenAIClient({
         apiKey: apiKey,
         model: chatModel
     });
 
-    // 2) Creamos UNA sola instancia de OpenAIClient para embeddings:
+    // 2) Cliente de embeddings (OpenAI Embeddings)
     const embedClient = new OpenAIClient({
         apiKey: apiKey,
         model: embedModel
     });
 
-    // 3) Instanciamos repositorios MySQL
+    // 3) Instanciamos repositorios MySQL (vistas planas)
     const mysqlRepos = {
         productoRepo: new MysqlProductoRepository(),
         varianteRepo: new MysqlVarianteRepository(),
-        // Agregamos aquí la instancia de MySQLChatRepository:
+        promocionRepo: new MysqlPromocionRepository(),
+        promocionProductoRepo: new MysqlPromocionProductoRepository(),
         chatRepo: new MySQLChatRepository()
-        // … aquí puedes agregar clienteRepo, sesionChatRepo, mensajeRepo, etc.
+        // … agregar otros repositorios MySQL según necesidad …
     };
 
-    // 4) Repositorios Pinecone: pasamos la *promesa* pineconeClientPromise
+    // 4) Instanciamos repositorios Pinecone (vectorial)
     const pineconeRepos = {
         pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient),
-        pineVarianteRepo: new PineconeVarianteRepository(pineconeClientPromise, embedClient)
-        // … aquí agregarías pineVarianteRepo, pinePromocionRepo, etc., todos con (pinecone, embedClient)
+        pineVarianteRepo: new PineconeVarianteRepository(pineconeClientPromise, embedClient),
+        pinePromocionRepo: new PineconePromocionRepository(pineconeClientPromise, embedClient),
+        pinePromocionProductoRepo: new PineconePromocionProductoRepository(pineconeClientPromise, embedClient)
+        // … agregar otros repositorios Pinecone según necesidad …
     };
 
     return {
         repos: {
+            // combinamos Repos MySQL + Pinecone en un solo objeto
             ...mysqlRepos,
             ...pineconeRepos
         },
-        chatClient,    // para manejar conversaciones (OpenAI chat)
-        embedClient,   // para generar embeddings (OpenAI embeddings)
-        pineconeRepos  // Exponemos solo el grupo Pinecone para sincronizar más tarde
+        chatClient,    // cliente OpenAI para chat
+        embedClient,   // cliente OpenAI para embeddings
+        pineconeRepos  // grupo de repositorios Pinecone para sincronizar
     };
 }
 

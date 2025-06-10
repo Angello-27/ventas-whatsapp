@@ -1,5 +1,4 @@
 // src/infrastructure/vector/PineconeProductoRepository.js
-
 const pineconeConfig = require('../../config/pineconeConfig');
 const MysqlProductoRepository = require('../db/MysqlProductoRepository');
 
@@ -12,122 +11,70 @@ class PineconeProductoRepository {
         this.alreadySynced = false;
         this.pineconePromise = pineconePromise;
         this.embedClient = embedClient;
+        this.namespace = 'productos';
     }
-
-    /**
-     * Devuelve true si la namespace "productos" NO tiene vectores (totalVectorCount === 0).
-     * Si la namespace no existe, también devuelve true para que luego se cree y se sincronicen.
-     */
     async needsSync() {
-        // Si ya sincronizamos en este ciclo de vida, nunca más tocar Pinecone:
         if (this.alreadySynced) return false;
-
-        // 1) Obtenemos la instancia real de Pinecone
         const client = await this.pineconePromise;
         const index = client.Index(pineconeConfig.indexName);
-
         try {
-            // 2) Llamamos a describeIndexStats especificando la namespace "productos"
-            const statsResponse = await index.describeIndexStats({
-                describeIndexStatsRequest: {
-                    namespace: 'productos'
-                }
-            });
-
-            // statsResponse.namespaces["productos"].vectorCount es el número de vectores
-            const namespaceInfo = statsResponse.namespaces?.productos;
-            const count = namespaceInfo ? namespaceInfo.vectorCount : 0;
-
-            // Si no hay vectores (0), devolvemos true para sincronizar
-            return (count === 0);
+            const stats = await index.describeIndexStats({ describeIndexStatsRequest: { namespace: this.namespace } });
+            const count = stats.namespaces?.[this.namespace]?.vectorCount || 0;
+            return count === 0;
         } catch (err) {
-            // Si la namespace o el índice no existen, Pinecone arrojará PineconeNotFoundError
-            if (err.name === 'PineconeNotFoundError') {
-                return true;
-            }
+            if (err.name === 'PineconeNotFoundError') return true;
             throw err;
         }
     }
 
-    /**
-     * Resto de métodos (syncAllToVectorDB, semanticSearch) tal como los tienes.
-     */
     async syncAllToVectorDB() {
-        // 1) Obtenemos la instancia real de PineconeClient
         const client = await this.pineconePromise;
         const index = client.Index(pineconeConfig.indexName);
 
-        // 2) Obtenemos todos los productos desde MySQL
         const mysqlRepo = new MysqlProductoRepository();
-        const productos = await mysqlRepo.findAllActive();
+        const items = await mysqlRepo.findAllActive();
 
-        // 3) Generamos embeddings y armamos el array “vectors”
-        const vectors = [];
-        for (const prod of productos) {
-            const textToEmbed = `${prod.nombre} (${prod.genero}) - Marca: ${prod.marcaNombre}, Categoría: ${prod.categoriaNombre}`;
-            const embeddingResponse = await this.embedClient.embedText(textToEmbed);
-            const vectorValues = embeddingResponse.data[0].embedding;
-
-            vectors.push({
+        const vectors = await Promise.all(items.map(async prod => {
+            const textResp = await this.embedClient.embedText(`${prod.nombre} (${prod.genero}) Marca: ${prod.marcaNombre}, Cat: ${prod.categoriaNombre}`);
+            const values = textResp.data[0].embedding;
+            return {
                 id: prod.productoId.toString(),
-                values: vectorValues,
+                values,
                 metadata: {
                     nombre: prod.nombre,
                     marcaNombre: prod.marcaNombre,
-                    logoUrl: prod.logoUrl,
                     categoriaNombre: prod.categoriaNombre,
                     genero: prod.genero
                 }
-            });
-        }
+            };
+        }));
 
-        // 4) Hacemos el upsert (v6.x):
-        if (vectors.length > 0) {
-            await index.upsert(
-                vectors,                  // <- array aquí
-                { namespace: 'productos' } // <- segundo parámetro con namespace
-            );
-            console.log(`🟢 Se subieron ${vectors.length} vectores al índice "${pineconeConfig.indexName}".`);
-        } else {
-            console.log('⚠️ No hay vectores para subir (la lista está vacía).');
+        if (vectors.length) {
+            await index.upsert(vectors, { namespace: this.namespace });
+            this.alreadySynced = true;
         }
-
-        // Marcamos como sincronizado para no repetirlo
-        this.alreadySynced = true;
     }
 
     async semanticSearch(queryText, topK = 3) {
-        // 1) Generar embedding de la consulta
-        const embeddingResponse = await this.embedClient.embedText(queryText);
-        const queryVector = embeddingResponse.data[0].embedding;
-
-        // 2) Obtener cliente e índice
+        const qResp = await this.embedClient.embedText(queryText);
+        const queryVector = qResp.data[0].embedding;
         const client = await this.pineconePromise;
         const index = client.Index(pineconeConfig.indexName);
 
-        // 3) Ejecutar query
-        const queryResponse = await index.query(
-            {
-                topK: topK,
-                vector: queryVector,
-                includeMetadata: true
-            },
-            {
-                namespace: 'productos'
-            }
+        const result = await index.query(
+            { topK, vector: queryVector, includeMetadata: true },
+            { namespace: this.namespace }
         );
 
-        // 4) Mapear los resultados
-        return queryResponse.matches.map(match => ({
+        return result.matches.map(m => ({
             producto: {
-                productoId: parseInt(match.id, 10),
-                nombre: match.metadata.nombre,
-                marcaNombre: match.metadata.marcaNombre,
-                logoUrl: match.metadata.logoUrl,
-                categoriaNombre: match.metadata.categoriaNombre,
-                genero: match.metadata.genero
+                productoId: parseInt(m.id, 10),
+                nombre: m.metadata.nombre,
+                marcaNombre: m.metadata.marcaNombre,
+                categoriaNombre: m.metadata.categoriaNombre,
+                genero: m.metadata.genero
             },
-            score: match.score
+            score: m.score
         }));
     }
 }
