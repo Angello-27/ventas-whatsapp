@@ -7,7 +7,7 @@
  * @param {number} topK     Máximo de resultados (por defecto 5)
  * @returns {Promise<{text: string, results: Array}>}
  */
-async function searchPromotionProducts(body, repos, topK = 5) {
+async function searchPromotionProducts(body, repos, topK = 3) {
   if (!repos.pinePromocionProductoRepo || typeof repos.pinePromocionProductoRepo.semanticSearch !== 'function') {
     return {
       text: 'No hay productos en promoción disponibles en este momento.',

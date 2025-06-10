@@ -73,7 +73,7 @@ class MainSearchService {
 
     // Buscar promociones si está disponible
     try {
-      results.promotions = await searchPromotions(query, this.repos, 2);
+      results.promotions = await searchPromotions(query, this.repos, 3);
       results.promotionProducts = await searchPromotionProducts(query, this.repos, 3);
     } catch (err) {
       console.warn('⚠️ Servicios de promociones no disponibles:', err.message);
