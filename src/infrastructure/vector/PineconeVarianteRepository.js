@@ -84,7 +84,9 @@ class PineconeVarianteRepository {
             const batch = vectors.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
             console.log(`     · [${this.namespace}] Lote ${i + 1}/${totalBatches} (${batch.length} vectores)`);
             try {
-                await index.upsert(batch, { namespace: this.namespace });
+                await index.upsert(batch, {
+                    namespace: this.namespace
+                });
             } catch (err) {
                 console.error(`❌ [${this.namespace}] Error lote ${i + 1}: ${err.message}`);
             }
