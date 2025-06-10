@@ -1,155 +1,130 @@
 // src/core/services/mainSearchService.js
 
 const QueryEnhancementService = require('./queryEnhancementService');
+const { searchProducts } = require('./searchProducts');
+const { searchProductVariants } = require('./searchProductVariants');
+// Opcional: incluir servicios de promoción
+const { searchPromotions } = require('./searchPromotions');
+const { searchPromotionProducts } = require('./searchPromotionProducts');
 
 class MainSearchService {
-    constructor(repos) {
-        this.repos = repos;
-        this.queryEnhancer = new QueryEnhancementService();
+  constructor(repos) {
+    this.repos = repos;
+    this.queryEnhancer = new QueryEnhancementService();
+  }
+
+  /**
+   * Realiza búsqueda normal con query mejorada y devuelve texto + lista de items para contexto
+   * @param {string} originalQuery - Consulta original del usuario
+   * @returns {Promise<{ text: string, items: Array }>} - Texto formateado y array de items
+   */
+  async performSearch(originalQuery) {
+    console.log('🔍 Iniciando búsqueda principal para:', originalQuery);
+
+    // 1) Mejorar la consulta
+    const enhancedQuery = this.queryEnhancer.enhanceQuery(originalQuery);
+    if (enhancedQuery !== originalQuery) {
+      console.log(`🔄 Query mejorada: "${originalQuery}" → "${enhancedQuery}"`);
     }
 
-    /**
-     * Realiza búsqueda normal con query mejorada
-     * @param {string} originalQuery - Consulta original
-     * @returns {Promise<string>}
-     */
-    async performSearch(originalQuery) {
-        try {
-            console.log('🔍 Iniciando búsqueda principal para:', originalQuery);
+    // 2) Ejecutar búsquedas principales
+    let results = await this._executeSearches(enhancedQuery);
 
-            // Mejorar la consulta
-            const enhancedQuery = this.queryEnhancer.enhanceQuery(originalQuery);
-
-            // Realizar búsquedas principales
-            const results = await this._executeSearches(enhancedQuery);
-
-            // Si no hay resultados, intentar con consulta original
-            if (this._isEmpty(results) && enhancedQuery !== originalQuery) {
-                console.log('⚠️ Sin resultados con query mejorada, intentando original...');
-                const originalResults = await this._executeSearches(originalQuery);
-                return this._formatResults(originalResults, originalQuery);
-            }
-
-            return this._formatResults(results, enhancedQuery);
-
-        } catch (error) {
-            console.error('Error en búsqueda principal:', error);
-            return 'Hubo un error realizando la búsqueda de productos.';
-        }
+    // 3) Si no hay resultados, reintentar con la query original
+    if (this._isEmpty(results) && enhancedQuery !== originalQuery) {
+      console.log('⚠️ Sin resultados con query mejorada, intentando con la original...');
+      results = await this._executeSearches(originalQuery);
     }
 
-    /**
-     * Ejecuta todas las búsquedas necesarias
-     * @param {string} query - Consulta a ejecutar
-     * @returns {Promise<object>}
-     */
-    async _executeSearches(query) {
-        const { searchProducts } = require('./searchProducts');
-        const { searchVariants } = require('./searchVariants');
+    // 4) Formatear texto de resultados
+    const text = this._formatResults(results);
 
-        const results = {
-            products: await searchProducts(query, this.repos, 3),
-            variants: await searchVariants(query, this.repos, 3),
-            promotions: null,
-            promotionProducts: null
-        };
-
-        // Intentar búsquedas de promociones si están disponibles
-        try {
-            const { searchPromotions } = require('./searchPromotions');
-            const { searchPromotionProducts } = require('./searchPromotionProducts');
-
-            results.promotions = await searchPromotions(query, this.repos, 2);
-            results.promotionProducts = await searchPromotionProducts(query, this.repos, 3);
-        } catch (promError) {
-            console.warn('⚠️ Servicios de promociones no disponibles:', promError.message);
-        }
-
-        return results;
+    // 5) Construir array de items para contexto
+    const items = [];
+    if (results.products?.results) {
+      items.push(...results.products.results.map(r => ({ type: 'product',  ...r })));
+    }
+    if (results.variants?.results) {
+      items.push(...results.variants.results.map(r => ({ type: 'variant',  ...r })));
+    }
+    if (results.promotions?.results) {
+      items.push(...results.promotions.results.map(r => ({ type: 'promotion', ...r })));
+    }
+    if (results.promotionProducts?.results) {
+      items.push(...results.promotionProducts.results.map(r => ({ type: 'promoProduct', ...r })));
     }
 
-    /**
-     * Verifica si los resultados están vacíos
-     * @param {object} results - Resultados de búsqueda
-     * @returns {boolean}
-     */
-    _isEmpty(results) {
-        const hasProducts = results.products?.results?.length > 0;
-        const hasVariants = results.variants?.results?.length > 0;
-        return !hasProducts && !hasVariants;
+    console.log(`✅ Búsqueda completada: ${items.length} items`);
+    return { text, items };
+  }
+
+  /**
+   * Ejecuta las búsquedas de productos, variantes y promociones
+   * @param {string} query
+   * @returns {Promise<object>}
+   */
+  async _executeSearches(query) {
+    const results = {
+      products: await searchProducts(query, this.repos, 3),
+      variants: await searchProductVariants(query, this.repos, 3),
+      promotions: null,
+      promotionProducts: null
+    };
+
+    // Buscar promociones si está disponible
+    try {
+      results.promotions = await searchPromotions(query, this.repos, 2);
+      results.promotionProducts = await searchPromotionProducts(query, this.repos, 3);
+    } catch (err) {
+      console.warn('⚠️ Servicios de promociones no disponibles:', err.message);
     }
 
-    /**
-     * Formatea los resultados para presentación
-     * @param {object} results - Resultados de búsqueda
-     * @param {string} query - Consulta utilizada
-     * @returns {string}
-     */
-    _formatResults(results, query) {
-        const productText = typeof results.products === 'object' ? results.products.text : results.products;
-        const variantText = typeof results.variants === 'object' ? results.variants.text : results.variants;
+    return results;
+  }
 
-        let searchText = `*Productos relevantes:*\n${productText}\n\n*Variantes relevantes:*\n${variantText}`;
+  /**
+   * Comprueba si no hay items en productos ni variantes
+   * @param {object} results
+   */
+  _isEmpty(results) {
+    const hasProducts = !!results.products?.results?.length;
+    const hasVariants = !!results.variants?.results?.length;
+    return !hasProducts && !hasVariants;
+  }
 
-        // Agregar promociones si hay resultados
-        if (results.promotions?.results?.length > 0) {
-            searchText += `\n\n*🎉 Promociones activas:*\n${results.promotions.text}`;
-        }
+  /**
+   * Formatea los resultados en un bloque de texto para WhatsApp
+   * @param {object} results
+   */
+  _formatResults(results) {
+    const prodText = typeof results.products === 'object'
+      ? results.products.text
+      : results.products;
+    const varText = typeof results.variants === 'object'
+      ? results.variants.text
+      : results.variants;
 
-        if (results.promotionProducts?.results?.length > 0) {
-            searchText += `\n\n*🏷️ Productos en promoción:*\n${results.promotionProducts.text}`;
-        }
+    let searchText = `*Productos relevantes:*
+${prodText}
 
-        return searchText;
+*Variantes relevantes:*
+${varText}`;
+
+    if (results.promotions?.text) {
+      searchText += `
+
+*🎉 Promociones activas:*
+${results.promotions.text}`;
+    }
+    if (results.promotionProducts?.text) {
+      searchText += `
+
+*🏷️ Productos en promoción:*
+${results.promotionProducts.text}`;
     }
 
-    /**
-     * Crea contexto basado en los resultados de búsqueda
-     * @param {string} query - Consulta original
-     * @returns {Promise<object>}
-     */
-    async createSearchContext(query) {
-        try {
-            const enhancedQuery = this.queryEnhancer.enhanceQuery(query);
-            const results = await this._executeSearches(enhancedQuery);
-
-            let allItems = [];
-
-            if (results.products?.results) {
-                allItems.push(...results.products.results.map(r => ({ type: 'product', ...r })));
-            }
-
-            if (results.variants?.results) {
-                allItems.push(...results.variants.results.map(r => ({ type: 'variant', ...r })));
-            }
-
-            const context = {
-                lastType: 'search',
-                lastQuery: query,
-                enhancedQuery: enhancedQuery,
-                timestamp: new Date().toISOString(),
-                lastItems: allItems,
-                keyTerms: this.queryEnhancer.extractKeyTerms(query)
-            };
-
-            console.log('✅ Contexto de búsqueda creado:', {
-                query: context.lastQuery,
-                items: context.lastItems.length,
-                terms: Object.keys(context.keyTerms)
-            });
-
-            return context;
-
-        } catch (error) {
-            console.error('Error creando contexto:', error);
-            return {
-                lastType: 'search',
-                lastQuery: query,
-                timestamp: new Date().toISOString(),
-                lastItems: []
-            };
-        }
-    }
+    return searchText;
+  }
 }
 
 module.exports = MainSearchService;

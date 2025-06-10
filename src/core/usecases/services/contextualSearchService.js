@@ -1,145 +1,130 @@
 // src/core/services/contextualSearchService.js
 
+const { searchProducts }       = require('./searchProducts');
+const { searchProductVariants } = require('./searchProductVariants');
+
+/**
+ * ContextualSearchService:
+ *   - Opera sobre el array lastItems guardado en sesión
+ *   - Extrae colores, tallas y precios directamente de lastItems
+ *   - Extiende la búsqueda conservando el contexto previo
+ */
 class ContextualSearchService {
-    constructor(repos) {
-        this.repos = repos;
+  constructor(repos) {
+    this.repos = repos;
+  }
+
+  /**
+   * Obtiene colores únicos de lastItems
+   * @param {Array} lastItems
+   * @returns {string}
+   */
+  getColorsFromContext(lastItems) {
+    console.log('🖌️ ContextualSearch: getColorsFromContext, items=', lastItems.length);
+    if (!lastItems || !lastItems.length) {
+      return 'No tengo productos en contexto para mostrar colores.';
+    }
+    const colors = [...new Set(
+      lastItems
+        .filter(i => i.type === 'variant')
+        .map(v => v.variante.color)
+        .filter(Boolean)
+    )];
+    console.log(`   → Colores extraídos: ${colors.join(', ')}`);
+    if (!colors.length) {
+      return 'No hay información de colores disponible para los productos consultados.';
+    }
+    return `*Colores disponibles:*
+${colors.map(c => `• ${c}`).join('\n')}`;
+  }
+
+  /**
+   * Obtiene tallas únicas de lastItems
+   * @param {Array} lastItems
+   * @returns {string}
+   */
+  getSizesFromContext(lastItems) {
+    console.log('🖌️ ContextualSearch: getSizesFromContext, items=', lastItems.length);
+    if (!lastItems || !lastItems.length) {
+      return 'No tengo productos en contexto para mostrar tallas.';
+    }
+    const sizes = [...new Set(
+      lastItems
+        .filter(i => i.type === 'variant')
+        .map(v => v.variante.talla)
+        .filter(Boolean)
+    )];
+    console.log(`   → Tallas extraídas: ${sizes.join(', ')}`);
+    if (!sizes.length) {
+      return 'No hay información de tallas disponible para los productos consultados.';
+    }
+    return `*Tallas disponibles:*
+${sizes.map(s => `• ${s}`).join('\n')}`;
+  }
+
+  /**
+   * Muestra precios de lastItems
+   * @param {Array} lastItems
+   * @returns {string}
+   */
+  getPricesFromContext(lastItems) {
+    console.log('🖌️ ContextualSearch: getPricesFromContext, items=', lastItems.length);
+    if (!lastItems || !lastItems.length) {
+      return 'No tengo productos en contexto para mostrar precios.';
+    }
+    const lines = lastItems.map((item, idx) => {
+      if (item.type === 'product') {
+        return `${idx + 1}. *${item.producto.nombre}* (Marca: ${item.producto.marcaNombre}) - Consultar variantes para precios específicos`;
+      } else if (item.type === 'variant') {
+        return `${idx + 1}. *${item.variante.productoNombre}* (${item.variante.color}, ${item.variante.talla}) — *$${item.variante.precioVenta.toFixed(2)}*`;
+      }
+      return `${idx + 1}. Item sin información de precio`;
+    });
+    return `*Precios de productos consultados:*
+${lines.join('\n')}`;
+  }
+
+  /**
+   * Extiende la búsqueda combinando items previos y nuevos resultados
+   * @param {string} newQuery
+   * @param {Array} lastItems
+   * @returns {Promise<string>}
+   */
+  async extendSearch(newQuery, lastItems) {
+    console.log(`🖌️ ContextualSearch: extendSearch con query='${newQuery}', itemsPrevios=${lastItems.length}`);
+    // Construir resumen de items anteriores
+    let previousText = '';
+    if (lastItems && lastItems.length) {
+      const prevLines = lastItems.slice(0, 3).map((item, i) => {
+        if (item.type === 'product') {
+          return `• ${item.producto.nombre} (${item.producto.marcaNombre}, ${item.producto.categoriaNombre})`;
+        } else if (item.type === 'variant') {
+          return `• ${item.variante.productoNombre} (${item.variante.color}, ${item.variante.talla})`;
+        }
+        return `• Item ${i + 1}`;
+      });
+      previousText = `*Consultados anteriormente:*
+${prevLines.join('\n')}
+
+`;
     }
 
-    /**
-     * Obtiene colores de productos en contexto
-     * @param {Array} lastItems - Items del contexto
-     * @returns {Promise<string>}
-     */
-    async getColorsFromContext(lastItems) {
-        if (!lastItems || lastItems.length === 0) {
-            return 'No tengo productos en contexto para mostrar colores.';
-        }
+    // Ejecutar nuevas búsquedas
+    const prodSearch  = await searchProducts(newQuery, this.repos, 3);
+    const varSearch   = await searchProductVariants(newQuery, this.repos, 3);
 
-        try {
-            const firstProduct = lastItems[0];
-            const productoNombre = firstProduct.producto?.nombre || firstProduct.variante?.productoNombre;
+    const newProductText = prodSearch.text;
+    const newVariantText = varSearch.text;
 
-            if (!productoNombre) {
-                return 'No puedo determinar el producto para mostrar colores.';
-            }
+    console.log('   → Nuevos productos:', newProductText.split('\n').length, 'líneas');
+    console.log('   → Nuevas variantes:', newVariantText.split('\n').length, 'líneas');
 
-            const variants = await this.repos.pineVarianteRepo.semanticSearch(`producto ${productoNombre}`, 15);
+    return `${previousText}*Nuevos resultados:*
+${newProductText}
 
-            if (!variants || variants.length === 0) {
-                return 'No encontré variantes de color para este producto.';
-            }
-
-            const colores = [...new Set(variants.map(v => v.variante.color))].filter(c => c);
-
-            if (colores.length === 0) {
-                return 'No hay información de colores disponible.';
-            }
-
-            return `*Colores disponibles para ${productoNombre}:*\n${colores.map(color => `• ${color}`).join('\n')}`;
-
-        } catch (error) {
-            console.error('Error obteniendo colores:', error);
-            return 'Hubo un error consultando los colores disponibles.';
-        }
-    }
-
-    /**
-     * Obtiene tallas de productos en contexto
-     * @param {Array} lastItems - Items del contexto
-     * @returns {Promise<string>}
-     */
-    async getSizesFromContext(lastItems) {
-        if (!lastItems || lastItems.length === 0) {
-            return 'No tengo productos en contexto para mostrar tallas.';
-        }
-
-        try {
-            const firstProduct = lastItems[0];
-            const productoNombre = firstProduct.producto?.nombre || firstProduct.variante?.productoNombre;
-
-            if (!productoNombre) {
-                return 'No puedo determinar el producto para mostrar tallas.';
-            }
-
-            const variants = await this.repos.pineVarianteRepo.semanticSearch(`producto ${productoNombre}`, 15);
-
-            if (!variants || variants.length === 0) {
-                return 'No encontré variantes de talla para este producto.';
-            }
-
-            const tallas = [...new Set(variants.map(v => v.variante.talla))].filter(t => t);
-
-            if (tallas.length === 0) {
-                return 'No hay información de tallas disponible.';
-            }
-
-            return `*Tallas disponibles para ${productoNombre}:*\n${tallas.map(talla => `• ${talla}`).join('\n')}`;
-
-        } catch (error) {
-            console.error('Error obteniendo tallas:', error);
-            return 'Hubo un error consultando las tallas disponibles.';
-        }
-    }
-
-    /**
-     * Obtiene precios de productos en contexto
-     * @param {Array} lastItems - Items del contexto
-     * @returns {string}
-     */
-    getPricesFromContext(lastItems) {
-        if (!lastItems || lastItems.length === 0) {
-            return 'No tengo productos en contexto para mostrar precios.';
-        }
-
-        const lines = lastItems.map((item, index) => {
-            if (item.producto) {
-                return `${index + 1}. *${item.producto.nombre}* - Consultar variantes para precios específicos`;
-            } else if (item.variante) {
-                return `${index + 1}. *${item.variante.productoNombre}* (${item.variante.color}, ${item.variante.talla}) - *$${item.variante.precioVenta}*`;
-            }
-            return `${index + 1}. Producto sin información de precio`;
-        });
-
-        return `*Precios de productos consultados:*\n${lines.join('\n')}`;
-    }
-
-    /**
-     * Extiende la búsqueda con nuevos términos
-     * @param {string} newQuery - Nueva consulta
-     * @param {Array} lastItems - Items del contexto anterior
-     * @returns {Promise<string>}
-     */
-    async extendSearch(newQuery, lastItems) {
-        try {
-            const { searchProducts } = require('./searchProducts');
-            const { searchVariants } = require('./searchVariants');
-
-            const newProductSearch = await searchProducts(newQuery, this.repos, 3);
-            const newVariantSearch = await searchVariants(newQuery, this.repos, 3);
-
-            const newProductText = typeof newProductSearch === 'object' ? newProductSearch.text : newProductSearch;
-            const newVariantText = typeof newVariantSearch === 'object' ? newVariantSearch.text : newVariantSearch;
-
-            let previousText = '';
-            if (lastItems && lastItems.length > 0) {
-                const prevLines = lastItems.slice(0, 3).map(item => {
-                    if (item.producto) {
-                        return `• ${item.producto.nombre} (${item.producto.marcaNombre})`;
-                    } else if (item.variante) {
-                        return `• ${item.variante.productoNombre} (${item.variante.color}, ${item.variante.talla})`;
-                    }
-                    return '• Producto consultado anteriormente';
-                });
-                previousText = `*Productos consultados anteriormente:*\n${prevLines.join('\n')}\n\n`;
-            }
-
-            return `${previousText}*Nuevos resultados:*\n${newProductText}\n\n*Nuevas variantes:*\n${newVariantText}`;
-
-        } catch (error) {
-            console.error('Error extendiendo búsqueda:', error);
-            return 'Hubo un error al buscar nuevos productos.';
-        }
-    }
+*Variantes nuevas:*
+${newVariantText}`;
+  }
 }
 
 module.exports = ContextualSearchService;
