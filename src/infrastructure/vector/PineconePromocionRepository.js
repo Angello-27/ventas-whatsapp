@@ -100,29 +100,41 @@ class PineconePromocionRepository {
 
     async semanticSearch(queryText, topK = 3) {
         console.log(`❓ [${this.namespace}] semanticSearch query="${queryText}" topK=${topK}`);
-        const { data } = await this.embedClient.embedText(queryText);
-        const client = await this.pineconePromise;
-        const index = client.index(pineconeConfig.indexName);
 
-        const result = await index.query(
-            { topK, vector: data[0].embedding, includeMetadata: true },
-            { namespace: this.namespace }
-        );
-        return result.matches.map(m => ({
-            promocion: {
-                promocionId: parseInt(m.id, 10),
-                titulo: m.metadata.titulo,
-                descuento: m.metadata.descuento,
-                fechaInicio: m.metadata.fechaInicio,
-                fechaFin: m.metadata.fechaFin,
-                tipoPromo: m.metadata.tipoPromo,
-                targetId: m.metadata.targetId,
-                targetNombre: m.metadata.targetNombre,
-                cobertura: m.metadata.cobertura,
-                genero: m.metadata.genero
-            },
-            score: m.score
-        }));
+        try {
+            const { data } = await this.embedClient.embedText(queryText);
+            const client = await this.pineconePromise;
+            const index = client.index(pineconeConfig.indexName);
+
+            // ✅ Usar .namespace() primero
+            const namespacedIndex = index.namespace(this.namespace);
+            const result = await namespacedIndex.query({
+                topK: topK,
+                vector: data[0].embedding,
+                includeMetadata: true
+            });
+
+            console.log(`🔍 [${this.namespace}] Resultados encontrados: ${result.matches?.length || 0}`);
+
+            return result.matches.map(m => ({
+                promocion: {
+                    promocionId: parseInt(m.id, 10),
+                    titulo: m.metadata.titulo,
+                    descuento: m.metadata.descuento,
+                    fechaInicio: m.metadata.fechaInicio,
+                    fechaFin: m.metadata.fechaFin,
+                    tipoPromo: m.metadata.tipoPromo,
+                    targetId: m.metadata.targetId,
+                    targetNombre: m.metadata.targetNombre,
+                    cobertura: m.metadata.cobertura,
+                    genero: m.metadata.genero
+                },
+                score: m.score
+            }));
+        } catch (error) {
+            console.error(`❌ [${this.namespace}] Error en semanticSearch:`, error);
+            throw error;
+        }
     }
 }
 

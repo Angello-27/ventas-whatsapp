@@ -99,27 +99,39 @@ class PineconeVarianteRepository {
 
     async semanticSearch(queryText, topK = 3) {
         console.log(`❓ [${this.namespace}] semanticSearch query="${queryText}" topK=${topK}`);
-        const { data } = await this.embedClient.embedText(queryText);
-        const client = await this.pineconePromise;
-        const index = client.index(pineconeConfig.indexName);
 
-        const result = await index.query(
-            { topK, vector: data[0].embedding, includeMetadata: true },
-            { namespace: this.namespace }
-        );
-        return result.matches.map(m => ({
-            variante: {
-                varianteId: parseInt(m.id, 10),
-                sku: m.metadata.sku,
-                productoNombre: m.metadata.productoNombre,
-                color: m.metadata.color,
-                talla: m.metadata.talla,
-                material: m.metadata.material,
-                precioVenta: m.metadata.precioVenta,
-                cantidad: m.metadata.cantidad
-            },
-            score: m.score
-        }));
+        try {
+            const { data } = await this.embedClient.embedText(queryText);
+            const client = await this.pineconePromise;
+            const index = client.index(pineconeConfig.indexName);
+
+            // ✅ Usar .namespace() primero
+            const namespacedIndex = index.namespace(this.namespace);
+            const result = await namespacedIndex.query({
+                topK: topK,
+                vector: data[0].embedding,
+                includeMetadata: true
+            });
+
+            console.log(`🔍 [${this.namespace}] Resultados encontrados: ${result.matches?.length || 0}`);
+
+            return result.matches.map(m => ({
+                variante: {
+                    varianteId: parseInt(m.id, 10),
+                    sku: m.metadata.sku,
+                    productoNombre: m.metadata.productoNombre,
+                    color: m.metadata.color,
+                    talla: m.metadata.talla,
+                    material: m.metadata.material,
+                    precioVenta: m.metadata.precioVenta,
+                    cantidad: m.metadata.cantidad
+                },
+                score: m.score
+            }));
+        } catch (error) {
+            console.error(`❌ [${this.namespace}] Error en semanticSearch:`, error);
+            throw error;
+        }
     }
 }
 
