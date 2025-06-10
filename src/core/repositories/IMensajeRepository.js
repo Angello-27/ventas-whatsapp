@@ -1,5 +1,3 @@
-// src/core/repositories/IMensajeRepository.js
-
 /**
  * Interfaz para acceso a la entidad Mensaje.
  * Permite guardar mensajes y recuperar el historial de una sesión.
@@ -10,8 +8,8 @@ class IMensajeRepository {
      * @param {{ sesionId: number, direccion: 'Entrante'|'Saliente', contenido: string }} data
      * @returns {Promise<import('../entities/Mensaje')>}
      */
-    async save(data) {
-        throw new Error('IMensajeRepository.save no implementado.');
+    async saveMessage(data) { // ✅ Cambiar de save a saveMessage para consistencia
+        throw new Error('IMensajeRepository.saveMessage no implementado.');
     }
 
     /**
@@ -19,8 +17,8 @@ class IMensajeRepository {
      * @param {number} sesionId
      * @returns {Promise<import('../entities/Mensaje')[]>}
      */
-    async findBySesionId(sesionId) {
-        throw new Error('IMensajeRepository.findBySesionId no implementado.');
+    async findMessagesBySesionId(sesionId) { // ✅ Cambiar para consistencia
+        throw new Error('IMensajeRepository.findMessagesBySesionId no implementado.');
     }
 }
 

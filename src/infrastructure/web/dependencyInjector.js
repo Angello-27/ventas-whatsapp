@@ -19,13 +19,12 @@ const MysqlProductoRepository = require('../db/MysqlProductoRepository');
 const MysqlVarianteRepository = require('../db/MysqlProductoVarianteRepository');
 const MysqlPromocionRepository = require('../db/MysqlPromocionRepository');
 const MysqlPromocionProductoRepository = require('../db/MysqlPromocionProductoRepository');
-const MySQLChatRepository = require('../db/MySQLChatRepository');
 
 // — Pinecone (vectorial) Repositorios —
-const PineconeProductoRepository = require('../vector/PineconeProductoRepository');
+//const PineconeProductoRepository = require('../vector/PineconeProductoRepository');
 const PineconeVarianteRepository = require('../vector/PineconeVarianteRepository');
-const PineconePromocionRepository = require('../vector/PineconePromocionRepository');
-const PineconePromocionProductoRepository = require('../vector/PineconePromocionProductoRepository');
+//const PineconePromocionRepository = require('../vector/PineconePromocionRepository');
+//const PineconePromocionProductoRepository = require('../vector/PineconePromocionProductoRepository');
 
 function buildDeps() {
     // 1) Cliente de chat (OpenAI Chat)
@@ -45,16 +44,15 @@ function buildDeps() {
         productoRepo: new MysqlProductoRepository(),
         varianteRepo: new MysqlVarianteRepository(),
         promocionRepo: new MysqlPromocionRepository(),
-        promocionProductoRepo: new MysqlPromocionProductoRepository(),
-        chatRepo: new MySQLChatRepository()
+        promocionProductoRepo: new MysqlPromocionProductoRepository()
         // … agregar otros repositorios MySQL según necesidad …
     };
 
     // 4) Instanciamos repositorios Pinecone (vectorial)
     const pineconeRepos = {
-        pinePromocionProductoRepo: new PineconePromocionProductoRepository(pineconeClientPromise, embedClient),
-        pinePromocionRepo: new PineconePromocionRepository(pineconeClientPromise, embedClient),
-        pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient),
+        //pinePromocionProductoRepo: new PineconePromocionProductoRepository(pineconeClientPromise, embedClient),
+        //pinePromocionRepo: new PineconePromocionRepository(pineconeClientPromise, embedClient),
+        //pineProductoRepo: new PineconeProductoRepository(pineconeClientPromise, embedClient),
         pineVarianteRepo: new PineconeVarianteRepository(pineconeClientPromise, embedClient),
         // … agregar otros repositorios Pinecone según necesidad …
     };

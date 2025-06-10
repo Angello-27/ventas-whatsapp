@@ -5,7 +5,7 @@ const pool = require('./mysqlPool');
 
 class MysqlProductoVarianteRepository extends IProductoVarianteRepository {
     async findAllActive() {
-        const [rows] = await pool.query('SELECT * FROM vista_variantes_productos');
+        const [rows] = await pool.query('SELECT * FROM vista_variantes_productos LIMIT 500');
         return rows.map(row => new ProductoVariante(row));F
     }
 }

@@ -1,39 +1,27 @@
 // src/infrastructure/db/MySQLChatRepository.js
-
-const IClienteRepository = require('../../core/repositories/IClienteRepository');
-const ISesionChatRepository = require('../../core/repositories/ISesionChatRepository');
-const IMensajeRepository = require('../../core/repositories/IMensajeRepository');
-
+const IChatRepository = require('../../core/repositories/IChatRepository'); //  Usar interfaz combinada
 const Cliente = require('../../core/entities/Cliente');
-const SesionChat = require('../../core/entities/SesionChat');
+const Sesion = require('../../core/entities/Sesion'); //  Cambiar de SesionChat a Sesion
 const Mensaje = require('../../core/entities/Mensaje');
 
 const pool = require('./mysqlPool');
 
-class MySQLChatRepository extends IClienteRepository {
+class MySQLChatRepository extends IChatRepository {
     constructor() {
-        super();
-        // Heredamos IClienteRepository, luego mezclamos manualmente ISesionChatRepository e IMensajeRepository:
-        Object.assign(this, new ISesionChatRepository());
-        Object.assign(this, new IMensajeRepository());
+        super(); // ✅ Simplificar, ya no necesitas Object.assign múltiples
     }
 
     //
     // ----- Métodos de IClienteRepository -----
     //
 
-    /**
-     * Busca un cliente por teléfono (sin prefijo “whatsapp:”).
-     * @param {string} telefono
-     * @returns {Promise<Cliente|null>}
-     */
     async findByTelefono(telefono) {
         const sql = `
-      SELECT ClienteId, Telefono, Nombre, Email, createdAt, isActive
-      FROM clientes
-      WHERE Telefono = ? AND isActive = 1
-      LIMIT 1
-    `;
+            SELECT ClienteId, Telefono, Nombre, Email, createdAt, isActive
+            FROM clientes
+            WHERE Telefono = ? AND isActive = 1
+            LIMIT 1
+        `;
         const [rows] = await pool.query(sql, [telefono]);
         if (!rows.length) return null;
 
@@ -48,24 +36,19 @@ class MySQLChatRepository extends IClienteRepository {
         });
     }
 
-    /**
-     * Crea un nuevo cliente en la tabla `clientes`.
-     * @param {{ nombre: string|null, telefono: string, email: string|null }} data
-     * @returns {Promise<Cliente>}
-     */
     async create({ nombre = null, telefono, email = null }) {
         const sql = `
-      INSERT INTO clientes (Nombre, Telefono, Email, createdAt, isActive)
-      VALUES (?, ?, ?, NOW(), 1)
-    `;
+            INSERT INTO clientes (Nombre, Telefono, Email, createdAt, isActive)
+            VALUES (?, ?, ?, NOW(), 1)
+        `;
         const [result] = await pool.query(sql, [nombre, telefono, email]);
-        // Luego recuperamos el registro recién insertado:
         const insertId = result.insertId;
+
         const [rows] = await pool.query(
             `SELECT ClienteId, Telefono, Nombre, Email, createdAt, isActive
-         FROM clientes
-         WHERE ClienteId = ?
-         LIMIT 1`,
+             FROM clientes
+             WHERE ClienteId = ?
+             LIMIT 1`,
             [insertId]
         );
         const r = rows[0];
@@ -80,106 +63,116 @@ class MySQLChatRepository extends IClienteRepository {
     }
 
     //
-    // ----- Métodos de ISesionChatRepository -----
+    // ----- Métodos de ISesionRepository -----
     //
 
-    /**
-     * Busca la sesión activa de un cliente (FinalizadoEn IS NULL y isActive = 1).
-     * @param {number} clienteId
-     * @returns {Promise<SesionChat|null>}
-     */
     async findActiveByClienteId(clienteId) {
         const sql = `
-      SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, isActive, createdAt
-      FROM sesiones
-      WHERE ClienteId = ? AND FinalizadoEn IS NULL AND isActive = 1
-      ORDER BY IniciadoEn DESC
-      LIMIT 1
-    `;
+            SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, 
+                   ultimoContexto, isActive, createdAt
+            FROM sesiones
+            WHERE ClienteId = ? AND FinalizadoEn IS NULL AND isActive = 1
+            ORDER BY IniciadoEn DESC
+            LIMIT 1
+        `;
         const [rows] = await pool.query(sql, [clienteId]);
         if (!rows.length) return null;
 
         const r = rows[0];
-        return new SesionChat({
+        return new Sesion({ // ✅ Usar Sesion en lugar de SesionChat
             sesionId: r.SesionId,
             clienteId: r.ClienteId,
             iniciadoEn: r.IniciadoEn,
             finalizadoEn: r.FinalizadoEn,
+            ultimoContexto: r.ultimoContexto, // ✅ Incluir contexto
             isActive: Boolean(r.isActive),
             createdAt: r.createdAt
         });
     }
 
-    /**
-     * Crea una nueva sesión para un cliente (createdAt se ponen con NOW()).
-     * @param {{ clienteId: number }} data
-     * @returns {Promise<SesionChat>}
-     */
     async createSession({ clienteId }) {
         const sql = `
-      INSERT INTO sesiones (ClienteId, IniciadoEn, FinalizadoEn, createdAt, isActive)
-      VALUES (?, NOW(), NULL, NOW(), 1)
-    `;
+            INSERT INTO sesiones (ClienteId, IniciadoEn, FinalizadoEn, ultimoContexto, createdAt, isActive)
+            VALUES (?, NOW(), NULL, NULL, NOW(), 1)
+        `;
         const [result] = await pool.query(sql, [clienteId]);
         const insertId = result.insertId;
 
-        // Recuperamos la sesión recien creada
         const [rows] = await pool.query(
-            `SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, isActive, createdAt
-         FROM sesiones
-         WHERE SesionId = ?
-         LIMIT 1`,
+            `SELECT SesionId, ClienteId, IniciadoEn, FinalizadoEn, 
+                    ultimoContexto, isActive, createdAt
+             FROM sesiones
+             WHERE SesionId = ?
+             LIMIT 1`,
             [insertId]
         );
         const r = rows[0];
-        return new SesionChat({
+        return new Sesion({
             sesionId: r.SesionId,
             clienteId: r.ClienteId,
             iniciadoEn: r.IniciadoEn,
             finalizadoEn: r.FinalizadoEn,
+            ultimoContexto: r.ultimoContexto,
             isActive: Boolean(r.isActive),
             createdAt: r.createdAt
         });
     }
 
-    /**
-     * Marca una sesión como finalizada (FinalizadoEn=NOW(), isActive=0).
-     * @param {number} sesionId
-     * @returns {Promise<void>}
-     */
     async endSession(sesionId) {
         const sql = `
-      UPDATE sesiones
-      SET FinalizadoEn = NOW(),
-          isActive     = 0,
-      WHERE SesionId = ?
-    `;
+            UPDATE sesiones
+            SET FinalizadoEn = NOW(),
+                isActive = 0
+            WHERE SesionId = ?
+        `;
         await pool.query(sql, [sesionId]);
+    }
+
+    // ✅ NUEVOS métodos para contexto
+    async updateSessionContext(sesionId, contextObj) {
+        const json = JSON.stringify(contextObj);
+        const sql = `
+            UPDATE sesiones 
+            SET ultimoContexto = ? 
+            WHERE SesionId = ?
+        `;
+        await pool.query(sql, [json, sesionId]);
+    }
+
+    async getSessionContext(sesionId) {
+        const sql = `
+            SELECT ultimoContexto 
+            FROM sesiones 
+            WHERE SesionId = ?
+        `;
+        const [rows] = await pool.query(sql, [sesionId]);
+        if (!rows.length || !rows[0].ultimoContexto) return null;
+
+        try {
+            return JSON.parse(rows[0].ultimoContexto);
+        } catch (err) {
+            console.warn('Error parsing session context:', err);
+            return null;
+        }
     }
 
     //
     // ----- Métodos de IMensajeRepository -----
     //
 
-    /**
-     * Guarda un mensaje en la tabla `mensajes`.
-     * @param {{ sesionId: number, direccion: 'Entrante'|'Saliente', contenido: string }} data
-     * @returns {Promise<Mensaje>}
-     */
     async saveMessage({ sesionId, direccion, contenido }) {
         const sql = `
-      INSERT INTO mensajes (SesionId, Direccion, Contenido, createdAt, isActive)
-      VALUES (?, ?, ?, NOW(), 1)
-    `;
+            INSERT INTO mensajes (SesionId, Direccion, Contenido, createdAt, isActive)
+            VALUES (?, ?, ?, NOW(), 1)
+        `;
         const [result] = await pool.query(sql, [sesionId, direccion, contenido]);
         const insertId = result.insertId;
 
-        // Recuperar el mensaje recien insertado
         const [rows] = await pool.query(
             `SELECT MensajeId, SesionId, Direccion, Contenido, createdAt, isActive
-         FROM mensajes
-         WHERE MensajeId = ?
-         LIMIT 1`,
+             FROM mensajes
+             WHERE MensajeId = ?
+             LIMIT 1`,
             [insertId]
         );
         const r = rows[0];
@@ -193,18 +186,13 @@ class MySQLChatRepository extends IClienteRepository {
         });
     }
 
-    /**
-     * Recupera todos los mensajes activos de una sesión, ordenados por fecha ascendente.
-     * @param {number} sesionId
-     * @returns {Promise<Mensaje[]>}
-     */
     async findMessagesBySesionId(sesionId) {
         const sql = `
-      SELECT MensajeId, SesionId, Direccion, Contenido, createdAt, isActive
-      FROM mensajes
-      WHERE SesionId = ? AND isActive = 1
-      ORDER BY createdAt ASC
-    `;
+            SELECT MensajeId, SesionId, Direccion, Contenido, createdAt, isActive
+            FROM mensajes
+            WHERE SesionId = ? AND isActive = 1
+            ORDER BY createdAt ASC
+        `;
         const [rows] = await pool.query(sql, [sesionId]);
         return rows.map(r => new Mensaje({
             mensajeId: r.MensajeId,
